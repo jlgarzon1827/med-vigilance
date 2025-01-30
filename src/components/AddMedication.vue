@@ -54,34 +54,46 @@ export default {
 
 <style scoped>
 .add-medication {
-  text-align: center;
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .form-group {
-  margin: 15px 0;
+  margin-bottom: 1rem;
   display: flex;
-  justify-content: center;
   align-items: center;
 }
 
 .form-group label {
   width: 100px;
   text-align: right;
-  margin-right: 10px;
+  margin-right: 1rem;
+  color: #495057;
 }
 
 .form-group input {
-  width: 200px;
-  padding: 5px;
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
 }
 
-.btn-submit {
-  margin-top: 10px;
-  padding: 8px 16px;
-  background-color: #4CAF50;
+button {
+  background-color: #42b983;
   color: white;
   border: none;
+  padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
+
+button:hover {
+  background-color: #3aa876;
+}
+
 </style>

@@ -5,7 +5,6 @@
     <div class="dashboard-content">
       <AddMedication />
       <div class="medication-list">
-          <h2>Lista de Medicamentos</h2>
           <MedicationList />
         </div>
     </div>
@@ -41,6 +40,12 @@ export default {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+}
+
+h1 {
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .dashboard-content {

@@ -27,6 +27,15 @@ export default createStore({
     },
     setReminders(state, reminders) {
       state.reminders = reminders
+    },
+    updateMedication(state, updatedMedication) {
+      const index = state.medications.findIndex(med => med.id === updatedMedication.id)
+      if (index !== -1) {
+        state.medications.splice(index, 1, updatedMedication)
+      }
+    },
+    removeMedication(state, id) {
+      state.medications = state.medications.filter(med => med.id !== id)
     }
   },
   actions: {
@@ -78,6 +87,26 @@ export default createStore({
         commit('addMedication', response.data)
       } catch (error) {
         console.error('Error adding medication:', error)
+      }
+    },
+    async editMedication({ commit }, medication) {
+      try {
+        const response = await axios.put(`http://localhost:8000/medicamentos/${medication.id}/`, medication)
+        commit('updateMedication', response.data)
+        return true
+      } catch (error) {
+        console.error('Error updating medication:', error)
+        return false
+      }
+    },
+    async deleteMedication({ commit }, id) {
+      try {
+        await axios.delete(`http://localhost:8000/medicamentos/${id}/`)
+        commit('removeMedication', id)
+        return true
+      } catch (error) {
+        console.error('Error deleting medication:', error)
+        return false
       }
     }
   },

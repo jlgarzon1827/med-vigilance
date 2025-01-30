@@ -39,17 +39,27 @@ export default {
 </script>
 
 <style scoped>
-nav {
-  padding: 30px;
+.nav {
+  text-align: center;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-nav a {
+.nav a {
+  text-decoration: none;
+  color: #333;
+  margin: 0 1rem;
+  padding: 0.5rem 1rem;
+  transition: color 0.3s ease;
+}
+
+.nav a.active {
+  color: #42b983;
   font-weight: bold;
-  color: #2c3e50;
-  margin-right: 10px;
 }
 
-nav a.router-link-exact-active {
+.nav a:hover {
   color: #42b983;
 }
 </style>
