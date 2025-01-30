@@ -3,11 +3,12 @@
     <router-link to="/">Home</router-link> |
     <template v-if="isLoggedIn">
       <router-link to="/dashboard">Dashboard</router-link> |
+      <router-link to="/profile">Mi Perfil</router-link> |
       <a href="#" @click.prevent="handleLogout">Logout</a>
     </template>
     <template v-else>
-      <router-link to="/login">Login</router-link> |
-      <router-link to="/register">Register</router-link>
+      <router-link to="/login">Inicio de Sesión</router-link> |
+      <router-link to="/register">Registro</router-link>
     </template>
   </nav>
 </template>

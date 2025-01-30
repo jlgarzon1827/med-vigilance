@@ -6,7 +6,8 @@ export default createStore({
     user: null,
     token: localStorage.getItem('token') || null,
     medications: [],
-    reminders: []
+    reminders: [],
+    userProfile: null
   },
   mutations: {
     setUser(state, user) {
@@ -27,6 +28,9 @@ export default createStore({
     },
     setReminders(state, reminders) {
       state.reminders = reminders
+    },
+    setUserProfile(state, profile) {
+      state.userProfile = profile
     },
     updateMedication(state, updatedMedication) {
       const index = state.medications.findIndex(med => med.id === updatedMedication.id)
@@ -72,6 +76,14 @@ export default createStore({
       commit('setToken', null)
       commit('setUser', null)
       localStorage.removeItem('token')
+    },
+    async fetchUserProfile({ commit }) {
+      try {
+        const response = await axios.get('http://localhost:8000/profile/')
+        commit('setUserProfile', response.data)
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+      }
     },
     async fetchMedications({ commit }) {
       try {
