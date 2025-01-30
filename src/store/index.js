@@ -63,6 +63,22 @@ export default createStore({
       commit('setToken', null)
       commit('setUser', null)
       localStorage.removeItem('token')
+    },
+    async fetchMedications({ commit }) {
+      try {
+        const response = await axios.get('http://localhost:8000/medicamentos/')
+        commit('setMedications', response.data)
+      } catch (error) {
+        console.error('Error fetching medications:', error)
+      }
+    },
+    async addMedication({ commit }, medicationData) {
+      try {
+        const response = await axios.post('http://localhost:8000/medicamentos/', medicationData)
+        commit('addMedication', response.data)
+      } catch (error) {
+        console.error('Error adding medication:', error)
+      }
     }
   },
   getters: {
