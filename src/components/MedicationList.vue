@@ -1,6 +1,5 @@
 <template>
   <div class="medication-list">
-    <h2>Lista de Medicamentos</h2>
     <table v-if="medications.length">
       <thead>
         <tr>
@@ -23,6 +22,9 @@
       </tbody>
     </table>
     <p v-else>No hay medicamentos registrados.</p>
+    <div class="add-button-container">
+      <button @click="$emit('showAddModal')" class="btn-add">Añadir Medicamento</button>
+    </div>
 
     <!-- Modal de edición -->
     <div v-if="isEditing" class="modal">
@@ -31,15 +33,36 @@
         <form @submit.prevent="handleEdit">
           <div class="form-group">
             <label for="edit-name">Nombre:</label>
-            <input type="text" id="edit-name" v-model="editForm.nombre" required>
+            <input 
+              type="text" 
+              id="edit-name" 
+              v-model="editForm.nombre" 
+              placeholder="ej: Paracetamol"
+              required
+            >
+            <span v-if="errors.nombre" class="error-message">{{ errors.nombre }}</span>
           </div>
           <div class="form-group">
             <label for="edit-dosis">Dosis:</label>
-            <input type="text" id="edit-dosis" v-model="editForm.dosis" required>
+            <input 
+              type="text" 
+              id="edit-dosis" 
+              v-model="editForm.dosis" 
+              placeholder="ej: 500mg"
+              required
+            >
+            <span v-if="errors.dosis" class="error-message">{{ errors.dosis }}</span>
           </div>
           <div class="form-group">
             <label for="edit-frecuencia">Frecuencia:</label>
-            <input type="text" id="edit-frecuencia" v-model="editForm.frecuencia" required>
+            <input 
+              type="text" 
+              id="edit-frecuencia" 
+              v-model="editForm.frecuencia" 
+              placeholder="ej: Cada 8 horas"
+              required
+            >
+            <span v-if="errors.frecuencia" class="error-message">{{ errors.frecuencia }}</span>
           </div>
           <div class="modal-buttons">
             <button type="submit" class="btn-edit">Guardar</button>
@@ -66,6 +89,7 @@
 <script>
 import { computed, reactive, ref, onMounted } from 'vue'
 import { useStore } from 'vuex'
+import { validateMedication } from '@/utils/validations'
 
 export default {
   name: 'MedicationList',
@@ -81,6 +105,11 @@ export default {
       dosis: '',
       frecuencia: ''
     })
+    const errors = reactive({
+      nombre: '',
+      dosis: '',
+      frecuencia: ''
+    })
 
     onMounted(() => {
       store.dispatch('fetchMedications')
@@ -92,6 +121,21 @@ export default {
     }
 
     const handleEdit = async () => {
+      // Reset errors
+      Object.keys(errors).forEach(key => errors[key] = '')
+
+      // Validate fields
+      const nombreError = validateMedication('nombre', editForm.nombre)
+      const dosisError = validateMedication('dosis', editForm.dosis)
+      const frecuenciaError = validateMedication('frecuencia', editForm.frecuencia)
+
+      if (nombreError || dosisError || frecuenciaError) {
+        errors.nombre = nombreError
+        errors.dosis = dosisError
+        errors.frecuencia = frecuenciaError
+        return
+      }
+
       const success = await store.dispatch('editMedication', { ...editForm })
       if (success) {
         isEditing.value = false
@@ -100,6 +144,7 @@ export default {
 
     const cancelEdit = () => {
       isEditing.value = false
+      Object.keys(errors).forEach(key => errors[key] = '')
     }
 
     const confirmDelete = (medication) => {
@@ -123,6 +168,7 @@ export default {
       isEditing,
       showDeleteConfirm,
       editForm,
+      errors,
       editMedication,
       handleEdit,
       cancelEdit,
@@ -142,12 +188,6 @@ export default {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-h2 {
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
-  text-align: left;
 }
 
 table {
@@ -176,33 +216,6 @@ td:last-child {
 th:last-child {
   text-align: right;
   padding-right: 2rem;
-}
-
-.btn-edit, .btn-delete {
-  padding: 0.25rem 0.75rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  margin-left: 0.5rem;
-}
-
-.btn-edit {
-  background-color: #e4fdff;
-  color: #000;
-}
-
-.btn-delete {
-  background-color: #fadadd;
-  color: #000;
-}
-
-.btn-edit:hover {
-  background-color: #7da9bd;
-}
-
-.btn-delete:hover {
-  background-color: #e7bbbf;
 }
 
 .modal {
@@ -241,23 +254,31 @@ th:last-child {
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   display: flex;
-  align-items: center;
+  flex-direction: column;
 }
 
-.modal-content label {
-  width: 100px;
-  text-align: right;
-  margin-right: 1rem;
+.form-group label {
+  margin-bottom: 0.5rem;
   color: #495057;
 }
 
-.modal-content input {
-  flex: 1;
+.form-group input {
   padding: 0.5rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
+}
+
+.form-group input::placeholder {
+  color: #adb5bd;
+  font-style: italic;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
 
 .modal-buttons {
@@ -265,5 +286,60 @@ th:last-child {
   justify-content: center;
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+.btn-edit, .btn-delete, .btn-cancel {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-edit {
+  background-color: #e4fdff;
+  color: #000;
+}
+
+.btn-delete {
+  background-color: #fadadd;
+  color: #000;
+}
+
+.btn-cancel {
+  background-color: #f8f9fa;
+  color: #000;
+}
+
+.btn-edit:hover {
+  background-color: #7da9bd;
+}
+
+.btn-delete:hover {
+  background-color: #e7bbbf;
+}
+
+.btn-cancel:hover {
+  background-color: #e9ecef;
+}
+
+.add-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.btn-add {
+  background-color: #e4fdff;
+  color: #000;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-add:hover {
+  background-color: #7da9bd;
 }
 </style>

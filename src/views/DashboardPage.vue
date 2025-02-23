@@ -2,16 +2,9 @@
   <div class="dashboard">
     <h1>Bienvenido al Dashboard</h1>
     <div class="dashboard-content">
-      <div class="medication-section">
-        <div class="header-actions">
-          <button @click="showAddModal = true" class="btn-add">Añadir Nuevo Medicamento</button>
-        </div>
-        <MedicationList />
-      </div>
+      <MedicationList @showAddModal="showAddModal = true" />
+      <AddMedication v-if="showAddModal" @close="showAddModal = false" />
     </div>
-
-    <!-- Modal para añadir medicamento -->
-    <AddMedication v-if="showAddModal" @close="showAddModal = false" />
   </div>
 </template>
 

@@ -1,29 +1,37 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <template v-if="isLoggedIn">
-      <router-link to="/dashboard">Dashboard</router-link> |
-      <router-link to="/profile">Mi Perfil</router-link> |
-      <a href="#" @click.prevent="handleLogout">Logout</a>
-    </template>
-    <template v-else>
-      <router-link to="/login">Inicio de Sesión</router-link> |
-      <router-link to="/register">Registro</router-link>
-    </template>
-  </nav>
+  <div>
+    <!-- NavBar solo se muestra si está logueado -->
+    <nav v-if="isLoggedIn" class="NavBar">
+      <router-link to="/" class="NavBar-link">Home</router-link>
+      <span class="separator"> | </span>
+      <router-link to="/dashboard" class="NavBar-link">Dashboard</router-link>
+      <span class="separator"> | </span>
+      <router-link to="/profile" class="NavBar-link">Mi Perfil</router-link>
+      <span class="separator"> | </span>
+      <a href="#" @click.prevent="handleLogout" class="NavBar-link">Logout</a>
+    </nav>
+
+    <!-- Navegación simple cuando no está logueado -->
+    <nav v-else class="NavBar">
+      <router-link to="/" class="NavBar-link">Home</router-link>
+      <span class="separator"> | </span>
+      <router-link to="/login" class="NavBar-link">Login</router-link>
+      <span class="separator"> | </span>
+      <router-link to="/register" class="NavBar-link">Registro</router-link>
+    </nav>
+  </div>
 </template>
 
 <script>
 import { computed } from 'vue'
-import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 
 export default {
   name: 'NavBar',
   setup() {
-    const store = useStore()
     const router = useRouter()
-
+    const store = useStore()
     const isLoggedIn = computed(() => store.getters.isLoggedIn)
 
     const handleLogout = async () => {
@@ -40,27 +48,30 @@ export default {
 </script>
 
 <style scoped>
-.nav {
+.NavBar {
   text-align: center;
   padding: 1rem 0;
   margin-bottom: 2rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #eee;
 }
 
-.nav a {
+.NavBar-link {
   text-decoration: none;
-  color: #333;
-  margin: 0 1rem;
-  padding: 0.5rem 1rem;
-  transition: color 0.3s ease;
+  color: #2c3e50;
+  padding: 0.5rem;
 }
 
-.nav a.active {
+.separator {
+  color: #2c3e50;
+  margin: 0 0.5rem;
+}
+
+.router-link-active {
   color: #42b983;
   font-weight: bold;
 }
 
-.nav a:hover {
+.NavBar-link:hover {
   color: #42b983;
 }
 </style>

@@ -7,37 +7,46 @@
       </div>
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
-          <label for="name">Nombre:</label>
-          <input 
-            type="text" 
-            id="name" 
-            v-model="name" 
-            placeholder="ej: Paracetamol"
-            required
-          >
+          <div class="input-row">
+            <label for="name">Nombre:</label>
+            <input 
+              type="text" 
+              id="name" 
+              v-model="name" 
+              placeholder="ej: Paracetamol"
+              required
+            >
+          </div>
+          <span v-if="errors.nombre" class="error-message">{{ errors.nombre }}</span>
         </div>
         <div class="form-group">
-          <label for="dosage">Dosis:</label>
-          <input 
-            type="text" 
-            id="dosage" 
-            v-model="dosage" 
-            placeholder="ej: 500mg"
-            required
-          >
+          <div class="input-row">
+            <label for="dosage">Dosis:</label>
+            <input 
+              type="text" 
+              id="dosage" 
+              v-model="dosage" 
+              placeholder="ej: 500mg"
+              required
+            >
+          </div>
+          <span v-if="errors.dosis" class="error-message">{{ errors.dosis }}</span>
         </div>
         <div class="form-group">
-          <label for="frequency">Frecuencia:</label>
-          <input 
-            type="text" 
-            id="frequency" 
-            v-model="frequency" 
-            placeholder="ej: Cada 8 horas"
-            required
-          >
+          <div class="input-row">
+            <label for="frequency">Frecuencia:</label>
+            <input 
+              type="text" 
+              id="frequency" 
+              v-model="frequency" 
+              placeholder="ej: Cada 8 horas"
+              required
+            >
+          </div>
+          <span v-if="errors.frecuencia" class="error-message">{{ errors.frecuencia }}</span>
         </div>
         <div class="modal-buttons">
-          <button type="submit" class="btn-edit">Añadir Medicamento</button>
+          <button type="submit" class="btn-edit">Añadir</button>
           <button type="button" class="btn-delete" @click="$emit('close')">Cancelar</button>
         </div>
       </form>
@@ -46,8 +55,9 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useStore } from 'vuex'
+import { validateMedication } from '@/utils/validations'
 
 export default {
   name: 'AddMedication',
@@ -57,8 +67,28 @@ export default {
     const name = ref('')
     const dosage = ref('')
     const frequency = ref('')
+    const errors = reactive({
+      nombre: '',
+      dosis: '',
+      frecuencia: ''
+    })
 
     const handleSubmit = async () => {
+      // Reset errors
+      Object.keys(errors).forEach(key => errors[key] = '')
+
+      // Validate fields
+      const nombreError = validateMedication('nombre', name.value)
+      const dosisError = validateMedication('dosis', dosage.value)
+      const frecuenciaError = validateMedication('frecuencia', frequency.value)
+
+      if (nombreError || dosisError || frecuenciaError) {
+        errors.nombre = nombreError
+        errors.dosis = dosisError
+        errors.frecuencia = frecuenciaError
+        return
+      }
+
       await store.dispatch('addMedication', {
         nombre: name.value,
         dosis: dosage.value,
@@ -74,6 +104,7 @@ export default {
       name,
       dosage,
       frequency,
+      errors,
       handleSubmit
     }
   }
@@ -119,28 +150,38 @@ export default {
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.input-row {
   display: flex;
   align-items: center;
 }
 
-.form-group label {
+.input-row label {
   width: 100px;
   text-align: right;
   margin-right: 1rem;
   color: #495057;
 }
 
-.form-group input {
+.input-row input {
   flex: 1;
   padding: 0.5rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
 }
 
-.form-group input::placeholder {
+.input-row input::placeholder {
   color: #adb5bd;
   font-style: italic;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  margin-left: calc(100px + 1rem);
 }
 
 .modal-buttons {
