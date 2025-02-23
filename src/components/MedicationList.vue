@@ -15,9 +15,9 @@
           <td>{{ medication.nombre }}</td>
           <td>{{ medication.dosis }}</td>
           <td>{{ medication.frecuencia }}</td>
-          <td class="actions">
+          <td>
             <button @click="editMedication(medication)" class="btn-edit">Editar</button>
-            <button @click="deleteMedication(medication.id)" class="btn-delete">Borrar</button>
+            <button @click="confirmDelete(medication)" class="btn-delete">Borrar</button>
           </td>
         </tr>
       </tbody>
@@ -48,6 +48,18 @@
         </form>
       </div>
     </div>
+
+    <!-- Modal de confirmación para borrar -->
+    <div v-if="showDeleteConfirm" class="modal">
+      <div class="modal-content confirm-dialog">
+        <h3>Confirmar eliminación</h3>
+        <p>¿Está seguro de que desea eliminar este medicamento?</p>
+        <div class="modal-buttons">
+          <button @click="handleDelete" class="btn-delete">Eliminar</button>
+          <button @click="cancelDelete" class="btn-cancel">Cancelar</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -61,6 +73,8 @@ export default {
     const store = useStore()
     const medications = computed(() => store.state.medications)
     const isEditing = ref(false)
+    const showDeleteConfirm = ref(false)
+    const selectedMedicationId = ref(null)
     const editForm = reactive({
       id: null,
       nombre: '',
@@ -88,20 +102,33 @@ export default {
       isEditing.value = false
     }
 
-    const deleteMedication = async (id) => {
-      if (confirm('¿Está seguro de que desea eliminar este medicamento?')) {
-        await store.dispatch('deleteMedication', id)
-      }
+    const confirmDelete = (medication) => {
+      selectedMedicationId.value = medication.id
+      showDeleteConfirm.value = true
+    }
+
+    const handleDelete = async () => {
+      await store.dispatch('deleteMedication', selectedMedicationId.value)
+      showDeleteConfirm.value = false
+      selectedMedicationId.value = null
+    }
+
+    const cancelDelete = () => {
+      showDeleteConfirm.value = false
+      selectedMedicationId.value = null
     }
 
     return {
       medications,
       isEditing,
+      showDeleteConfirm,
       editForm,
       editMedication,
       handleEdit,
       cancelEdit,
-      deleteMedication
+      confirmDelete,
+      handleDelete,
+      cancelDelete
     }
   }
 }
@@ -129,45 +156,53 @@ table {
   margin-top: 1rem;
 }
 
+th, td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
 th {
   background-color: #f8f9fa;
   color: #2c3e50;
   font-weight: 600;
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 2px solid #dee2e6;
 }
 
-td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #dee2e6;
+td:last-child {
+  text-align: right;
+  padding-right: 2rem;
+}
+
+th:last-child {
+  text-align: right;
+  padding-right: 2rem;
 }
 
 .btn-edit, .btn-delete {
   padding: 0.25rem 0.75rem;
-  margin: 0 0.25rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.875rem;
+  margin-left: 0.5rem;
 }
 
 .btn-edit {
-  background-color: #28a745;
-  color: white;
+  background-color: #e4fdff;
+  color: #000;
 }
 
 .btn-delete {
-  background-color: #dc3545;
-  color: white;
+  background-color: #fadadd;
+  color: #000;
 }
 
 .btn-edit:hover {
-  background-color: #218838;
+  background-color: #7da9bd;
 }
 
 .btn-delete:hover {
-  background-color: #c82333;
+  background-color: #e7bbbf;
 }
 
 .modal {
@@ -192,12 +227,20 @@ td {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.modal-content h2 {
-  margin-bottom: 1.5rem;
-  color: #2c3e50;
+.confirm-dialog {
+  max-width: 400px;
+  text-align: center;
 }
 
-.modal-content .form-group {
+.confirm-dialog h3 {
+  margin-bottom: 1rem;
+}
+
+.confirm-dialog p {
+  margin-bottom: 2rem;
+}
+
+.form-group {
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
@@ -219,41 +262,8 @@ td {
 
 .modal-buttons {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 1rem;
   margin-top: 1.5rem;
-}
-
-.actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-}
-
-.btn-edit, .btn-delete {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: background-color 0.3s ease;
-}
-
-.btn-edit {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-delete {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-edit:hover {
-  background-color: #218838;
-}
-
-.btn-delete:hover {
-  background-color: #c82333;
 }
 </style>

@@ -1,65 +1,75 @@
 <template>
   <div class="dashboard">
     <h1>Bienvenido al Dashboard</h1>
-    <p>Hola, {{ username }}!</p>
     <div class="dashboard-content">
-      <AddMedication />
-      <div class="medication-list">
-          <MedicationList />
+      <div class="medication-section">
+        <div class="header-actions">
+          <button @click="showAddModal = true" class="btn-add">Añadir Nuevo Medicamento</button>
         </div>
+        <MedicationList />
+      </div>
     </div>
+
+    <!-- Modal para añadir medicamento -->
+    <AddMedication v-if="showAddModal" @close="showAddModal = false" />
   </div>
 </template>
 
 <script>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useStore } from 'vuex'
-import AddMedication from '@/components/AddMedication.vue'
 import MedicationList from '@/components/MedicationList.vue'
+import AddMedication from '@/components/AddMedication.vue'
 
 export default {
   name: 'DashboardPage',
   components: {
-    AddMedication,
-    MedicationList
+    MedicationList,
+    AddMedication
   },
   setup() {
     const store = useStore()
     const username = computed(() => store.state.user || 'Usuario')
+    const showAddModal = ref(false)
 
     return {
-      username
+      username,
+      showAddModal
     }
   }
 }
-
 </script>
 
 <style scoped>
 .dashboard {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
-}
-
-h1 {
-  color: #2c3e50;
-  text-align: center;
-  margin-bottom: 2rem;
+  padding: 2rem;
 }
 
 .dashboard-content {
-  margin-top: 20px;
+  margin-top: 2rem;
 }
 
-.medication-section {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 30px;
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.medication-list {
-  margin-top: 30px;
-  text-align: center;
+.btn-add {
+  background-color: #e4fdff;
+  color: #000;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-add:hover {
+  background-color: #7da9bd;
 }
 </style>
+
