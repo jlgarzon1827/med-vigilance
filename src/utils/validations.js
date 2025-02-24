@@ -2,18 +2,21 @@ export const medicationRules = {
   nombre: {
     required: true,
     minLength: 3,
-    pattern: /^[A-Za-zÀ-ÿ\s]+$/,
-    message: "Ingrese un nombre de medicamento válido"
+    // Mejorado para aceptar solo nombres válidos de medicamentos
+    pattern: /^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s]{2,}$/,
+    message: "El nombre debe empezar con letra y contener solo letras y espacios (mínimo 3 caracteres)"
   },
   dosis: {
     required: true,
+    // Mejorado para asegurar espacio entre número y unidad
     pattern: /^\d+\s*(mg|g|ml)$/i,
     message: "Formato requerido: número seguido de 'mg', 'g' o 'ml' (ej: 500mg, 1g, 10ml)"
   },
   frecuencia: {
     required: true,
-    pattern: /^(Cada\s+)?\d+\s*(horas|h)$/i,
-    message: "Formato requerido: '[Cada] X horas/h' (ej: Cada 8 horas, 8h, 12 horas)"
+    // Mejorado para unificar formato
+    pattern: /^\d+\s*(horas|h)$/i,
+    message: "Formato requerido: número seguido de 'horas' o 'h' (ej: 8 horas, 8h)"
   }
 }
 
@@ -39,15 +42,32 @@ export const userRules = {
 
 export const validateMedication = (field, value) => {
   const rule = medicationRules[field]
+  
+  // Validación básica
   if (!value && rule.required) {
-    return rule.message
+    return 'Este campo es requerido'
   }
-  if (value.length < rule.minLength) {
+
+  // Validación de longitud mínima para el nombre
+  if (field === 'nombre' && value.length < rule.minLength) {
     return `Mínimo ${rule.minLength} caracteres`
   }
+
+  // Validación de formato
   if (!rule.pattern.test(value)) {
     return rule.message
   }
+
+  // Validaciones específicas adicionales
+  if (field === 'nombre' && /^[0-9]/.test(value)) {
+    return 'El nombre no puede empezar con números'
+  }
+
+  // Normalización de valores
+  if (field === 'frecuencia') {
+    value = value.toLowerCase().replace('horas', 'h')
+  }
+
   return null
 }
 

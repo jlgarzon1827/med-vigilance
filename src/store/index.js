@@ -7,7 +7,8 @@ export default createStore({
     token: localStorage.getItem('token') || null,
     medications: [],
     reminders: [],
-    userProfile: null
+    userProfile: null,
+    isLoading: false
   },
   mutations: {
     setUser(state, user) {
@@ -40,6 +41,9 @@ export default createStore({
     },
     removeMedication(state, id) {
       state.medications = state.medications.filter(med => med.id !== id)
+    },
+    setLoading(state, value) {
+      state.isLoading = value
     }
   },
   actions: {
@@ -78,30 +82,40 @@ export default createStore({
       localStorage.removeItem('token')
     },
     async fetchUserProfile({ commit }) {
+      commit('setLoading', true)
       try {
         const response = await axios.get('http://localhost:8000/profile/')
         commit('setUserProfile', response.data)
       } catch (error) {
         console.error('Error fetching profile:', error)
+      } finally {
+        commit('setLoading', false)
       }
     },
     async fetchMedications({ commit }) {
+      commit('setLoading', true)
       try {
         const response = await axios.get('http://localhost:8000/medicamentos/')
         commit('setMedications', response.data)
       } catch (error) {
         console.error('Error fetching medications:', error)
+      } finally {
+        commit('setLoading', false)
       }
     },
     async addMedication({ commit }, medicationData) {
+      commit('setLoading', true)
       try {
         const response = await axios.post('http://localhost:8000/medicamentos/', medicationData)
         commit('addMedication', response.data)
       } catch (error) {
         console.error('Error adding medication:', error)
+      } finally {
+        commit('setLoading', false)
       }
     },
     async editMedication({ commit }, medication) {
+      commit('setLoading', true)
       try {
         const response = await axios.put(`http://localhost:8000/medicamentos/${medication.id}/`, medication)
         commit('updateMedication', response.data)
@@ -109,9 +123,12 @@ export default createStore({
       } catch (error) {
         console.error('Error updating medication:', error)
         return false
+      } finally {
+        commit('setLoading', false)
       }
     },
     async deleteMedication({ commit }, id) {
+      commit('setLoading', true)
       try {
         await axios.delete(`http://localhost:8000/medicamentos/${id}/`)
         commit('removeMedication', id)
@@ -119,6 +136,8 @@ export default createStore({
       } catch (error) {
         console.error('Error deleting medication:', error)
         return false
+      } finally {
+        commit('setLoading', false)
       }
     }
   },

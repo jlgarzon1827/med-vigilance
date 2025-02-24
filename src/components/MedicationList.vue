@@ -1,6 +1,7 @@
 <template>
   <div class="medication-list">
-    <table v-if="medications.length">
+    <LoadingSpinner v-if="isLoading"/>
+    <table v-else-if="medications.length">
       <thead>
         <tr>
           <th>Nombre</th>
@@ -59,7 +60,7 @@
               type="text" 
               id="edit-frecuencia" 
               v-model="editForm.frecuencia" 
-              placeholder="ej: Cada 8 horas"
+              placeholder="ej: 8 horas"
               required
             >
             <span v-if="errors.frecuencia" class="error-message">{{ errors.frecuencia }}</span>
