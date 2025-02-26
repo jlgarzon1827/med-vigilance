@@ -5,6 +5,20 @@
       <router-link to="/" class="NavBar-link">Home</router-link>
       <span class="separator"> | </span>
       <router-link to="/dashboard" class="NavBar-link">Dashboard</router-link>
+      
+      <!-- Enlaces específicos para profesionales -->
+      <template v-if="isProfessional">
+        <span class="separator"> | </span>
+        <router-link to="/dashboard/statistics" class="NavBar-link">Estadísticas</router-link>
+        <span class="separator"> | </span>
+        <router-link to="/dashboard/reports" class="NavBar-link">Reportes</router-link>
+        <span class="separator"> | </span>
+        <router-link to="/dashboard/pending" class="NavBar-link">
+          Pendientes
+          <span v-if="pendingCount" class="badge">{{ pendingCount }}</span>
+        </router-link>
+      </template>
+      
       <span class="separator"> | </span>
       <router-link to="/profile" class="NavBar-link">Mi Perfil</router-link>
       <span class="separator"> | </span>
@@ -33,6 +47,10 @@ export default {
     const router = useRouter()
     const store = useStore()
     const isLoggedIn = computed(() => store.getters.isLoggedIn)
+    const isProfessional = computed(() => store.getters.isProfessional)
+    const pendingCount = computed(() => {
+      return store.state.pendingReviews?.pending || 0
+    })
 
     const handleLogout = async () => {
       await store.dispatch('logout')
@@ -41,6 +59,8 @@ export default {
 
     return {
       isLoggedIn,
+      isProfessional,
+      pendingCount,
       handleLogout
     }
   }
@@ -73,5 +93,15 @@ export default {
 
 .NavBar-link:hover {
   color: #42b983;
+}
+
+.badge {
+  display: inline-block;
+  background-color: #dc3545;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  margin-left: 5px;
 }
 </style>

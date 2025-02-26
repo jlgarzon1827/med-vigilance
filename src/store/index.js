@@ -8,7 +8,12 @@ export default createStore({
     medications: [],
     reminders: [],
     userProfile: null,
-    isLoading: false
+    isLoading: false,
+    adverseEffects: [],
+    dashboardStatistics: {},
+    medicationStatistics: {},
+    trends: {},
+    pendingReviews: []
   },
   mutations: {
     setUser(state, user) {
@@ -44,6 +49,27 @@ export default createStore({
     },
     setLoading(state, value) {
       state.isLoading = value
+    },
+    setAdverseEffects(state, effects) {
+      state.adverseEffects = effects
+    },
+    setDashboardStatistics(state, statistics) {
+      state.dashboardStatistics = statistics
+    },
+    setMedicationStatistics(state, statistics) {
+      state.medicationStatistics = statistics
+    },
+    setTrends(state, trends) {
+      state.trends = trends
+    },
+    setPendingReviews(state, reviews) {
+      state.pendingReviews = reviews
+    },
+    updateAdverseEffect(state, updatedEffect) {
+      const index = state.adverseEffects.findIndex(effect => effect.id === updatedEffect.id)
+      if (index !== -1) {
+        state.adverseEffects.splice(index, 1, updatedEffect)
+      }
     }
   },
   actions: {
@@ -63,13 +89,23 @@ export default createStore({
         return false
       }
     },
-    async register(_, { username, email, userPassword }) {
+    async register({ username, email, userPassword, is_professional, professional_id, specialty, institution }) {
       try {
-        await axios.post('http://localhost:8000/register/', {
+        const userData = {
           username,
-          email, 
+          email,
           password: userPassword
-        })
+        }
+        
+        // Añadir campos para profesionales si es necesario
+        if (is_professional) {
+          userData.is_professional = true
+          userData.professional_id = professional_id
+          userData.specialty = specialty
+          userData.institution = institution
+        }
+        
+        await axios.post('http://localhost:8000/register/', userData)
         return true
       } catch (error) {
         console.error('Registration failed', error)
@@ -139,9 +175,115 @@ export default createStore({
       } finally {
         commit('setLoading', false)
       }
+    },
+    async fetchAdverseEffects({ commit }) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.get('http://localhost:8000/adverse-effects/')
+        commit('setAdverseEffects', response.data)
+      } catch (error) {
+        console.error('Error fetching adverse effects:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async fetchDashboardStatistics({ commit }) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.get('http://localhost:8000/dashboard/statistics/')
+        commit('setDashboardStatistics', response.data)
+      } catch (error) {
+        console.error('Error fetching dashboard statistics:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async fetchMedicationStatistics({ commit }) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.get('http://localhost:8000/dashboard/medication-statistics/')
+        commit('setMedicationStatistics', response.data)
+      } catch (error) {
+        console.error('Error fetching medication statistics:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async fetchTrends({ commit }, days = 30) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.get(`http://localhost:8000/dashboard/trends/?days=${days}`)
+        commit('setTrends', response.data)
+      } catch (error) {
+        console.error('Error fetching trends:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async fetchPendingReviews({ commit }) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.get('http://localhost:8000/dashboard/pending-reviews/')
+        commit('setPendingReviews', response.data)
+      } catch (error) {
+        console.error('Error fetching pending reviews:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async markAsReviewed({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/mark-as-reviewed/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error marking as reviewed:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async exportData({ commit }, { format, filters }) {
+      commit('setLoading', true)
+      try {
+        let url = `http://localhost:8000/dashboard/export-${format}/`
+        if (filters) {
+          const queryParams = new URLSearchParams(filters).toString()
+          url = `${url}?${queryParams}`
+        }
+        
+        const response = await axios.get(url, {
+          responseType: 'blob'
+        })
+        
+        // Crear un objeto URL para el blob
+        const blob = new Blob([response.data])
+        const downloadUrl = window.URL.createObjectURL(blob)
+        
+        // Crear un enlace temporal y hacer clic en él para descargar
+        const link = document.createElement('a')
+        link.href = downloadUrl
+        link.download = `adverse-effects-export.${format}`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        return true
+      } catch (error) {
+        console.error(`Error exporting data as ${format}:`, error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
     }
   },
   getters: {
-    isLoggedIn: state => !!state.token
+    isLoggedIn: state => !!state.token,
+    isProfessional: state => {
+      return state.userProfile && 
+            state.userProfile.profile && 
+            state.userProfile.profile.user_type === 'PROFESSIONAL'
+  }
   }
 })
