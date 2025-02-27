@@ -64,6 +64,16 @@
         <MedicationList @showAddModal="showAddModal = true" />
         <AddMedication v-if="showAddModal" @close="showAddModal = false" />
       </div>
+      
+      <!-- Reportar efectos adversos (solo pacientes) -->
+      <div v-if="activeTab === 'report-adverse' && !isProfessional" class="tab-content">
+        <ReportAdverseEffect />
+      </div>
+      
+      <!-- Mis reportes (solo pacientes) -->
+      <div v-if="activeTab === 'my-reports' && !isProfessional" class="tab-content">
+        <MyAdverseEffects />
+      </div>
     </div>
   </div>
 </template>
@@ -79,6 +89,8 @@ import TrendsPanel from '@/components/dashboard/TrendsPanel.vue'
 import ReportsList from '@/components/dashboard/ReportsList.vue'
 import PendingReviews from '@/components/dashboard/PendingReviews.vue'
 import ExportOptions from '@/components/dashboard/ExportOptions.vue'
+import ReportAdverseEffect from '@/components/ReportAdverseEffect.vue'
+import MyAdverseEffects from '@/components/MyAdverseEffects.vue'
 
 export default {
   name: 'DashboardPage',
@@ -90,7 +102,9 @@ export default {
     TrendsPanel,
     ReportsList,
     PendingReviews,
-    ExportOptions
+    ExportOptions,
+    ReportAdverseEffect,
+    MyAdverseEffects
   },
   setup() {
     const store = useStore()
@@ -113,7 +127,11 @@ export default {
     ]
     
     const patientTabs = computed(() => {
-      return tabs.filter(tab => tab.id === 'medications')
+      return [
+        { id: 'medications', name: 'Mis Medicamentos' },
+        { id: 'report-adverse', name: 'Reportar Efecto Adverso' },
+        { id: 'my-reports', name: 'Mis Reportes' }
+      ]
     })
     
     onMounted(() => {
@@ -127,6 +145,9 @@ export default {
         store.dispatch('fetchAdverseEffects')
         store.dispatch('fetchDashboardStatistics')
       }
+      
+      // Cargar medicamentos para todos los usuarios
+      store.dispatch('fetchMedications')
     })
     
     // Vigilar cambios en el perfil para cargar datos cuando sea necesario

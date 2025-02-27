@@ -233,23 +233,16 @@ export default {
       if (!validateForm()) {
         return
       }
-      
-      // Preparar datos según el tipo de usuario
-      const userData = {
+
+      const success = await store.dispatch('register', {
         username: username.value,
         email: email.value,
-        userPassword: userPassword.value,
-        is_professional: isProfessional.value
-      }
-      
-      // Añadir campos de profesional si es necesario
-      if (isProfessional.value) {
-        userData.professional_id = professionalId.value
-        userData.specialty = specialty.value
-        userData.institution = institution.value
-      }
-
-      const success = await store.dispatch('register', userData)
+        password: userPassword.value,
+        is_professional: isProfessional.value,
+        professional_id: professionalId.value,
+        specialty: specialty.value,
+        institution: institution.value
+      })
 
       if (success) {
         router.push('/login')

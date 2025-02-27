@@ -13,7 +13,8 @@ export default createStore({
     dashboardStatistics: {},
     medicationStatistics: {},
     trends: {},
-    pendingReviews: []
+    pendingReviews: [],
+    activeTab: 'medications'
   },
   mutations: {
     setUser(state, user) {
@@ -37,6 +38,7 @@ export default createStore({
     },
     setUserProfile(state, profile) {
       state.userProfile = profile
+      state.userRole = profile?.profile?.user_type || 'PATIENT'
     },
     updateMedication(state, updatedMedication) {
       const index = state.medications.findIndex(med => med.id === updatedMedication.id)
@@ -65,6 +67,12 @@ export default createStore({
     setPendingReviews(state, reviews) {
       state.pendingReviews = reviews
     },
+    setActiveTab(state, tab) {
+      state.activeTab = tab;
+    },
+    addMedication(state, medication) {
+      state.medications.push(medication)
+    },
     updateAdverseEffect(state, updatedEffect) {
       const index = state.adverseEffects.findIndex(effect => effect.id === updatedEffect.id)
       if (index !== -1) {
@@ -89,12 +97,12 @@ export default createStore({
         return false
       }
     },
-    async register({ username, email, userPassword, is_professional, professional_id, specialty, institution }) {
+    async register({ commit }, { username, email, password, is_professional, professional_id, specialty, institution }) {
       try {
         const userData = {
-          username,
-          email,
-          password: userPassword
+          username: username,
+          email: email,
+          password: password
         }
         
         // Añadir campos para profesionales si es necesario
@@ -106,6 +114,8 @@ export default createStore({
         }
         
         await axios.post('http://localhost:8000/register/', userData)
+
+        commit('setUser', username)
         return true
       } catch (error) {
         console.error('Registration failed', error)
@@ -187,6 +197,20 @@ export default createStore({
         commit('setLoading', false)
       }
     },
+    async reportAdverseEffect({ commit, state }, adverseEffectData) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post('http://localhost:8000/adverse-effects/', adverseEffectData)
+        // Actualizar la lista de efectos adversos
+        commit('setAdverseEffects', [...state.adverseEffects, response.data])
+        return true
+      } catch (error) {
+        console.error('Error reporting adverse effect:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },    
     async fetchDashboardStatistics({ commit }) {
       commit('setLoading', true)
       try {
