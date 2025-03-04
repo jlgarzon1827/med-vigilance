@@ -304,6 +304,7 @@ export default createStore({
   },
   getters: {
     isLoggedIn: state => !!state.token,
+    activeTab: state => state.activeTab,
     isProfessional: state => {
       return state.userProfile && 
             state.userProfile.profile && 

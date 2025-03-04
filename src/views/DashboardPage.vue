@@ -110,7 +110,10 @@ export default {
     const store = useStore()
     const username = computed(() => store.state.user || 'Usuario')
     const showAddModal = ref(false)
-    const activeTab = ref('medications')
+    const activeTab = computed({
+      get: () => store.state.activeTab,
+      set: (value) => store.commit('setActiveTab', value)
+    })
     const userProfile = computed(() => store.state.userProfile)
     const isProfessional = computed(() => {
       return userProfile.value?.profile?.user_type === 'PROFESSIONAL'

@@ -94,7 +94,7 @@ export default {
     
     const goToReportForm = () => {
       store.commit('setActiveTab', 'report-adverse');
-      router.push('/dashboard');
+      router.replace('/dashboard');
     }
     
     onMounted(() => {
