@@ -114,7 +114,7 @@
               type="text" 
               id="frequency" 
               v-model="formData.frequency" 
-              placeholder="Ej: Cada 8 horas"
+              placeholder="Ej: 8 horas"
               required
             >
             <span v-if="errors.frequency" class="error-message">{{ errors.frequency }}</span>

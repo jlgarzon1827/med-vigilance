@@ -23,7 +23,7 @@
           <tbody>
             <tr v-for="effect in adverseEffects" :key="effect.id">
               <td>{{ effect.patient_name || 'Usuario ' + effect.patient }}</td>
-              <td>{{ effect.medication_name || 'Med ' + effect.medication }}</td>
+              <td>{{ effect.medicamento_nombre || 'Med ' + effect.id }}</td>
               <td>
                 <span :class="'severity-badge ' + effect.severity.toLowerCase()">
                   {{ effect.severity }}
@@ -40,7 +40,7 @@
                 <button @click="viewReport(effect)" class="btn-view">Ver</button>
                 <button 
                   v-if="effect.status === 'PENDING'" 
-                  @click="markAsReviewed(effect.id)" 
+                  @click="markAsReviewed(effect)" 
                   class="btn-review"
                 >
                   Revisar
@@ -91,9 +91,11 @@ export default {
       selectedReport.value = report
     }
     
-    const markAsReviewed = async (id) => {
-      const success = await store.dispatch('markAsReviewed', id)
+    const markAsReviewed = async (effect) => {
+      const success = await store.dispatch('markAsReviewed', effect.id)
       if (success) {
+        // Actualizar el estado del efecto adverso localmente
+        effect.status = 'REVIEWED'
         // Opcionalmente, mostrar un mensaje de éxito
       }
     }

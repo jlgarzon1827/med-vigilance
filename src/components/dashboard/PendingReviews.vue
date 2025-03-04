@@ -26,7 +26,7 @@
           </thead>
           <tbody>
             <tr v-for="(item, index) in medicationStats.by_severity" :key="index">
-              <td>{{ item.medication }}</td>
+              <td>{{ item.medication__nombre }}</td>
               <td>
                 <span :class="'severity-badge ' + item.severity.toLowerCase()">
                   {{ item.severity }}
@@ -63,7 +63,7 @@ export default {
       if (!medicationStats.value.most_reported) return null
       
       return {
-        labels: medicationStats.value.most_reported.map(item => item.medication),
+        labels: medicationStats.value.most_reported.map(item => item.medication__nombre),
         datasets: [{
           label: 'Número de reportes',
           data: medicationStats.value.most_reported.map(item => item.count),
