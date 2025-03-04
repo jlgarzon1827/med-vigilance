@@ -18,10 +18,15 @@
               <th>Fecha</th>
               <th>Estado</th>
               <th>Acciones</th>
+              <!-- Conditionally show Reviewer column -->
+              <th v-if="canAssignReviewers">Asignar Revisor</th>
             </tr>
           </thead>
+
+          <!-- Rows -->
           <tbody>
             <tr v-for="effect in adverseEffects" :key="effect.id">
+              <!-- Existing columns -->
               <td>{{ effect.patient_name || 'Usuario ' + effect.patient }}</td>
               <td>{{ effect.medicamento_nombre || 'Med ' + effect.id }}</td>
               <td>
@@ -46,13 +51,31 @@
                   Revisar
                 </button>
               </td>
+
+              <!-- Assign Reviewer Dropdown -->
+              <!-- Visible only if user has the canAssignReviewers permission -->
+              <td v-if="canAssignReviewers">
+                <select v-model="selectedReviewer[effect.id]" @change="assignReviewer(effect.id)">
+                  <!-- List of professionals -->
+                  <option v-for="user in professionals" :value="user.id" :key="user.id">
+                    {{ user.username }}
+                  </option>
+                </select>
+              </td>
+
             </tr>
           </tbody>
+
         </table>
+
+        <!-- No Data Message -->
         <p v-else class="no-data">No hay reportes que coincidan con los filtros.</p>
+        
       </div>
+
     </div>
-    
+
+    <!-- Report Detail Modal -->
     <ReportDetail 
       v-if="selectedReport" 
       :report="selectedReport" 
@@ -62,6 +85,7 @@
 </template>
 
 <script>
+// Import necessary components and Vuex
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -77,11 +101,34 @@ export default {
   },
   setup() {
     const store = useStore()
+    
+    // Fetch data from Vuex store
     const isLoading = computed(() => store.state.isLoading)
     const adverseEffects = computed(() => store.state.adverseEffects || [])
-    const selectedReport = ref(null)
-    const currentFilters = ref({})
     
+    // Check if user has permission to assign reviewers
+    const canAssignReviewers = computed(() => {
+      return store.state.userProfile?.permissions?.includes('MediAlertServerApp.can_assign_reviewers')
+    })
+
+    // Fetch list of professionals
+    const professionals = computed(() => store.state.professionals || [])
+    
+    // Selected reviewer for each report
+    const selectedReviewer = ref({})
+
+    // Assign Reviewer Action
+    const assignReviewer = async (reportId) => {
+      try {
+        await store.dispatch('assignReviewer', { reportId, reviewerId: selectedReviewer.value[reportId] })
+        alert('Revisor asignado correctamente.')
+        // Optionally refresh data
+        fetchFilteredReports()
+      } catch (error) {
+        console.error('Error assigning reviewer:', error)
+      }
+    }
+
     const formatDate = (dateString) => {
       const date = new Date(dateString)
       return date.toLocaleDateString()
@@ -94,9 +141,8 @@ export default {
     const markAsReviewed = async (effect) => {
       const success = await store.dispatch('markAsReviewed', effect.id)
       if (success) {
-        // Actualizar el estado del efecto adverso localmente
+        // Update the status locally
         effect.status = 'REVIEWED'
-        // Opcionalmente, mostrar un mensaje de éxito
       }
     }
     
@@ -108,21 +154,35 @@ export default {
     const fetchFilteredReports = () => {
       store.dispatch('fetchAdverseEffects', currentFilters.value)
     }
-    
+
+    // Initialize filters and selected report
+    const currentFilters = ref({})
+    const selectedReport = ref(null)
+
     onMounted(() => {
       if (!adverseEffects.value.length) {
         fetchFilteredReports()
       }
+      if (canAssignReviewers.value) {
+        store.dispatch('fetchProfessionals')
+      }
+      
+      fetchFilteredReports()
     })
     
     return {
       isLoading,
       adverseEffects,
       selectedReport,
+      currentFilters,
       formatDate,
       viewReport,
       markAsReviewed,
-      applyFilters
+      applyFilters,
+      canAssignReviewers,
+      professionals,
+      selectedReviewer,
+      assignReviewer
     }
   }
 }

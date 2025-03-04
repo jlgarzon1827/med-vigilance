@@ -14,7 +14,8 @@ export default createStore({
     medicationStatistics: {},
     trends: {},
     pendingReviews: [],
-    activeTab: 'medications'
+    activeTab: 'medications',
+    professionals: []
   },
   mutations: {
     setUser(state, user) {
@@ -78,6 +79,9 @@ export default createStore({
       if (index !== -1) {
         state.adverseEffects.splice(index, 1, updatedEffect)
       }
+    },
+    setProfessionals(state, professionals) {
+      state.professionals = professionals;
     }
   },
   actions: {
@@ -247,14 +251,14 @@ export default createStore({
     async fetchPendingReviews({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/pending-reviews/')
-        commit('setPendingReviews', response.data)
+        const response = await axios.get('http://localhost:8000/dashboard/pending-reviews/');
+        commit('setPendingReviews', response.data);
       } catch (error) {
-        console.error('Error fetching pending reviews:', error)
+        console.error('Error fetching pending reviews:', error);
       } finally {
-        commit('setLoading', false)
+        commit('setLoading', false);
       }
-    },
+    },    
     async markAsReviewed({ commit }, id) {
       commit('setLoading', true)
       try {
@@ -268,6 +272,28 @@ export default createStore({
         commit('setLoading', false)
       }
     },
+    async fetchProfessionals({ commit }) {
+      try {
+        const response = await axios.get('http://localhost:8000/users/?user_type=PROFESSIONAL');
+        commit('setProfessionals', response.data);
+      } catch (error) {
+        console.error('Error fetching professionals:', error);
+      }
+    },
+    async assignReviewer({ commit }, { reportId, reviewerId }) {
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/assign-reviewer/`, {
+          reviewer_id: reviewerId,
+        });
+        console.log(response.data);
+    
+        // Example: Re-fetch pending reviews or update state
+        const updatedReviews = await axios.get('http://localhost:8000/dashboard/pending-reviews/');
+        commit('setPendingReviews', updatedReviews.data);
+      } catch (error) {
+        console.error('Error assigning reviewer:', error);
+      }
+    },    
     async exportData({ commit }, { format, filters }) {
       commit('setLoading', true)
       try {

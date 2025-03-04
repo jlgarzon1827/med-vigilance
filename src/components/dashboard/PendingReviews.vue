@@ -1,103 +1,156 @@
 <template>
-  <div class="medication-statistics">
+  <div class="pending-reviews">
     <LoadingSpinner v-if="isLoading" />
     
     <div v-else>
-      <h2>Estadísticas por Medicamento</h2>
+      <h2>Revisiones Pendientes</h2>
       
-      <div class="chart-container">
-        <h3>Medicamentos más reportados</h3>
-        <BarChart 
-          v-if="medicationStats.most_reported && medicationStats.most_reported.length" 
-          :chart-data="mostReportedChartData" 
-        />
-        <p v-else class="no-data">No hay datos disponibles</p>
+      <div class="stats-cards">
+        <div class="stat-card">
+          <h3>Pendientes</h3>
+          <div class="stat-value">{{ pendingReviews.pending || 0 }}</div>
+        </div>
+        
+        <div class="stat-card urgent">
+          <h3>Urgentes</h3>
+          <div class="stat-value">{{ pendingReviews.urgent_pending || 0 }}</div>
+        </div>
       </div>
       
       <div class="table-container">
-        <h3>Distribución por severidad y medicamento</h3>
-        <table v-if="medicationStats.by_severity && medicationStats.by_severity.length">
+        <h3>Reportes Recientes Pendientes</h3>
+          <table v-if="pendingReviews.recent_pending && pendingReviews.recent_pending.length">
           <thead>
             <tr>
+              <th>Paciente</th>
               <th>Medicamento</th>
               <th>Severidad</th>
-              <th>Cantidad</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in medicationStats.by_severity" :key="index">
-              <td>{{ item.medication__nombre }}</td>
+            <tr v-for="report in pendingReviews.recent_pending" :key="report.id">
+              <td>{{ report.patient_name || 'Usuario ' + report.patient }}</td>
+              <td>{{ report.medication_name || 'Med ' + report.medication }}</td>
               <td>
-                <span :class="'severity-badge ' + item.severity.toLowerCase()">
-                  {{ item.severity }}
+                <span :class="'severity-badge ' + report.severity.toLowerCase()">
+                  {{ report.severity }}
                 </span>
               </td>
-              <td>{{ item.count }}</td>
+              <td>{{ formatDate(report.reported_at) }}</td>
+              <td>
+                <button @click="viewReport(report)" class="btn-view">Ver</button>
+                <button @click="markAsReviewed(report.id)" class="btn-review">Revisar</button>
+              </td>
             </tr>
           </tbody>
         </table>
-        <p v-else class="no-data">No hay datos disponibles</p>
+        <p v-else class="no-data">No hay reportes pendientes.</p>
       </div>
     </div>
+    
+    <ReportDetail 
+      v-if="selectedReport" 
+      :report="selectedReport" 
+      @close="selectedReport = null" 
+    />
   </div>
 </template>
 
 <script>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import BarChart from '@/components/dashboard/charts/BarChart.vue'
+import ReportDetail from '@/components/dashboard/ReportDetail.vue'
 
 export default {
-  name: 'MedicationStatistics',
+  name: 'PendingReviews',
   components: {
     LoadingSpinner,
-    BarChart
+    ReportDetail
   },
   setup() {
     const store = useStore()
     const isLoading = computed(() => store.state.isLoading)
-    const medicationStats = computed(() => store.state.medicationStatistics || {})
+    const pendingReviews = computed(() => store.state.pendingReviews || {})
+    const selectedReport = ref(null)
     
-    const mostReportedChartData = computed(() => {
-      if (!medicationStats.value.most_reported) return null
-      
-      return {
-        labels: medicationStats.value.most_reported.map(item => item.medication__nombre),
-        datasets: [{
-          label: 'Número de reportes',
-          data: medicationStats.value.most_reported.map(item => item.count),
-          backgroundColor: '#36A2EB'
-        }]
+    const formatDate = (dateString) => {
+      const date = new Date(dateString)
+      return date.toLocaleDateString()
+    }
+    
+    const viewReport = (report) => {
+      selectedReport.value = report
+    }
+    
+    const markAsReviewed = async (id) => {
+      const success = await store.dispatch('markAsReviewed', id)
+      if (success) {
+        store.dispatch('fetchPendingReviews')
       }
-    })
+    }
     
     onMounted(() => {
-      if (!medicationStats.value.most_reported) {
-        store.dispatch('fetchMedicationStatistics')
+      if (!pendingReviews.value.pending) {
+        store.dispatch('fetchPendingReviews')
       }
     })
     
     return {
       isLoading,
-      medicationStats,
-      mostReportedChartData
+      pendingReviews,
+      selectedReport,
+      formatDate,
+      viewReport,
+      markAsReviewed
     }
   }
 }
 </script>
 
 <style scoped>
-.medication-statistics {
+.pending-reviews {
   width: 100%;
 }
 
-.chart-container, .table-container {
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.stat-card.urgent {
+  background: #fff3cd;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #7da9bd;
+  margin-top: 0.5rem;
+}
+
+.stat-card.urgent .stat-value {
+  color: #664d03;
+}
+
+.table-container {
   background: #fff;
   padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  margin-bottom: 2rem;
+  margin-top: 2rem;
 }
 
 table {
@@ -142,6 +195,34 @@ th {
 
 .severity-badge.mortal {
   background-color: #842029;
+  color: #fff;
+}
+
+.btn-view, .btn-review {
+  padding: 0.25rem 0.5rem;
+  margin-right: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-view {
+  background-color: #e4fdff;
+  color: #000;
+}
+
+.btn-review {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.btn-view:hover {
+  background-color: #7da9bd;
+}
+
+.btn-review:hover {
+  background-color: #0f5132;
   color: #fff;
 }
 
