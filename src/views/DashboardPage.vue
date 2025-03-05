@@ -112,8 +112,19 @@ export default {
     const showAddModal = ref(false)
     const activeTab = computed({
       get: () => store.state.activeTab,
-      set: (value) => store.commit('setActiveTab', value)
+      set: (value) => {
+        store.commit('setActiveTab', value)
+        localStorage.setItem('activeTab', value)
+      }
     })
+    const setValidActiveTab = () => {
+      const currentTab = activeTab.value;
+      const availableTabs = isProfessional.value ? tabs : patientTabs.value;
+
+      if (!availableTabs.some(tab => tab.id === currentTab)) {
+        activeTab.value = availableTabs[0].id;
+      }
+    }
     const userProfile = computed(() => store.state.userProfile)
     const isProfessional = computed(() => {
       return userProfile.value?.profile?.user_type === 'PROFESSIONAL'
@@ -138,9 +149,17 @@ export default {
     })
     
     onMounted(() => {
+      const savedTab = localStorage.getItem('activeTab')
+      if (savedTab) {
+        store.commit('setActiveTab', savedTab)
+      }
+
       // Cargar datos del perfil de usuario si no están cargados
       if (!userProfile.value) {
         store.dispatch('fetchUserProfile')
+      }
+      else {
+        setValidActiveTab();
       }
       
       // Cargar datos necesarios para el dashboard
@@ -164,6 +183,8 @@ export default {
       if (!newValue && !patientTabs.value.some(tab => tab.id === activeTab.value)) {
         activeTab.value = 'medications'
       }
+
+      setValidActiveTab()
     })
 
     return {
@@ -173,7 +194,8 @@ export default {
       tabs,
       patientTabs,
       userProfile,
-      isProfessional
+      isProfessional,
+      setValidActiveTab
     }
   }
 }

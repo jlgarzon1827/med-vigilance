@@ -1,4 +1,3 @@
-<!-- components/dashboard/ReportFilters.vue -->
 <template>
   <div class="report-filters">
     <h3>Filtros</h3>
@@ -59,11 +58,13 @@
 
 <script>
 import { reactive } from 'vue'
+import { useStore } from 'vuex'
 
 export default {
   name: 'ReportFilters',
-  emits: ['filter-changed'],
-  setup(props, { emit }) {
+  setup() {
+    const store = useStore()
+
     const filters = reactive({
       severity: '',
       type: '',
@@ -74,14 +75,17 @@ export default {
     })
     
     const applyFilters = () => {
-      emit('filter-changed', { ...filters })
+      const nonEmptyFilters = Object.fromEntries(
+        Object.entries(filters).filter(([, value]) => value !== '')
+      )
+      store.dispatch('fetchAdverseEffects', nonEmptyFilters)
     }
     
     const resetFilters = () => {
       Object.keys(filters).forEach(key => {
         filters[key] = ''
       })
-      emit('filter-changed', { ...filters })
+      store.dispatch('fetchAdverseEffects', {})
     }
     
     return {

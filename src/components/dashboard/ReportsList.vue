@@ -152,7 +152,11 @@ export default {
     }
     
     const fetchFilteredReports = () => {
-      store.dispatch('fetchAdverseEffects', currentFilters.value)
+      // Filtrar solo las propiedades que no están vacías
+      const nonEmptyFilters = Object.fromEntries(
+        Object.entries(currentFilters.value).filter(([, value]) => value !== '')
+      )
+      store.dispatch('fetchAdverseEffects', nonEmptyFilters)
     }
 
     // Initialize filters and selected report

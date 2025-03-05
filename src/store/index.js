@@ -15,7 +15,9 @@ export default createStore({
     trends: {},
     pendingReviews: [],
     activeTab: 'medications',
-    professionals: []
+    professionals: [],
+    analysisReport: null,
+    correlationAnalysis: null
   },
   mutations: {
     setUser(state, user) {
@@ -81,7 +83,13 @@ export default createStore({
       }
     },
     setProfessionals(state, professionals) {
-      state.professionals = professionals;
+      state.professionals = professionals
+    },
+    setAnalysisReport(state, report) {
+      state.analysisReport = report
+    },
+    setCorrelationAnalysis(state, analysis) {
+      state.correlationAnalysis = analysis
     }
   },
   actions: {
@@ -190,15 +198,26 @@ export default createStore({
         commit('setLoading', false)
       }
     },
-    async fetchAdverseEffects({ commit }) {
-      commit('setLoading', true)
+    async fetchAdverseEffects({ commit }, filters = {}) {
+      commit('setLoading', true);
       try {
-        const response = await axios.get('http://localhost:8000/adverse-effects/')
-        commit('setAdverseEffects', response.data)
+        let url = `http://localhost:8000/adverse-effects/`
+        if (Object.keys(filters).length > 0) {
+          const queryParams = new URLSearchParams(filters).toString()
+          url = `${url}filtered_reports/?${queryParams}`
+        }
+    
+        const response = await axios.get(url);
+        if (Object.keys(filters).length > 0) {
+          commit('setAdverseEffects', response.data.results);
+        }
+        else{
+          commit('setAdverseEffects', response.data);
+        }
       } catch (error) {
-        console.error('Error fetching adverse effects:', error)
+        console.error('Error fetching adverse effects:', error);
       } finally {
-        commit('setLoading', false)
+        commit('setLoading', false);
       }
     },
     async reportAdverseEffect({ commit, state }, adverseEffectData) {
@@ -214,7 +233,7 @@ export default createStore({
       } finally {
         commit('setLoading', false)
       }
-    },    
+    },
     async fetchDashboardStatistics({ commit }) {
       commit('setLoading', true)
       try {
@@ -251,18 +270,18 @@ export default createStore({
     async fetchPendingReviews({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/pending-reviews/');
+        const response = await axios.get('http://localhost:8000/dashboard/pending_reviews/');
         commit('setPendingReviews', response.data);
       } catch (error) {
         console.error('Error fetching pending reviews:', error);
       } finally {
         commit('setLoading', false);
       }
-    },    
+    },
     async markAsReviewed({ commit }, id) {
       commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/mark-as-reviewed/`)
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/mark_as_reviewed/`)
         commit('updateAdverseEffect', response.data)
         return true
       } catch (error) {
@@ -293,7 +312,7 @@ export default createStore({
       } catch (error) {
         console.error('Error assigning reviewer:', error);
       }
-    },    
+    },
     async exportData({ commit }, { format, filters }) {
       commit('setLoading', true)
       try {
@@ -307,11 +326,9 @@ export default createStore({
           responseType: 'blob'
         })
         
-        // Crear un objeto URL para el blob
         const blob = new Blob([response.data])
         const downloadUrl = window.URL.createObjectURL(blob)
         
-        // Crear un enlace temporal y hacer clic en él para descargar
         const link = document.createElement('a')
         link.href = downloadUrl
         link.download = `adverse-effects-export.${format}`
@@ -326,6 +343,54 @@ export default createStore({
       } finally {
         commit('setLoading', false)
       }
+    },
+    async fetchAnalysisReport({ commit }) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.get('http://localhost:8000/dashboard/analysis_report/')
+        commit('setAnalysisReport', response.data)
+      } catch (error) {
+        console.error('Error fetching analysis report:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async fetchCorrelationAnalysis({ commit }) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.get('http://localhost:8000/dashboard/correlation_analysis/')
+        commit('setCorrelationAnalysis', response.data)
+      } catch (error) {
+        console.error('Error fetching correlation analysis:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async generatePdfReport({ commit }, filters) {
+      commit('setLoading', true)
+      try {
+        const queryParams = new URLSearchParams(filters).toString()
+        const response = await axios.get(`http://localhost:8000/dashboard/generate_pdf_report/?${queryParams}`, {
+          responseType: 'blob'
+        })
+        
+        const blob = new Blob([response.data], { type: 'application/pdf' })
+        const downloadUrl = window.URL.createObjectURL(blob)
+        
+        const link = document.createElement('a')
+        link.href = downloadUrl
+        link.download = `adverse-effects-report-${new Date().toISOString().split('T')[0]}.pdf`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        return true
+      } catch (error) {
+        console.error('Error generating PDF report:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
     }
   },
   getters: {
@@ -333,8 +398,8 @@ export default createStore({
     activeTab: state => state.activeTab,
     isProfessional: state => {
       return state.userProfile && 
-            state.userProfile.profile && 
-            state.userProfile.profile.user_type === 'PROFESSIONAL'
-  }
+             state.userProfile.profile && 
+             state.userProfile.profile.user_type === 'PROFESSIONAL'
+    }
   }
 })
