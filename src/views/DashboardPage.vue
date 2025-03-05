@@ -34,10 +34,10 @@
         <StatisticsPanel />
       </div>
       
-      <!-- Estadísticas por medicamento (solo profesionales) -->
-      <div v-if="activeTab === 'medication-stats' && isProfessional" class="tab-content">
+      <!-- TODO jlgarzon Estadísticas por medicamento (solo profesionales) -->
+      <!-- <div v-if="activeTab === 'medication-stats' && isProfessional" class="tab-content">
         <MedicationStatistics />
-      </div>
+      </div> -->
       
       <!-- Tendencias (solo profesionales) -->
       <div v-if="activeTab === 'trends' && isProfessional" class="tab-content">
@@ -84,7 +84,7 @@ import { useStore } from 'vuex'
 import MedicationList from '@/components/MedicationList.vue'
 import AddMedication from '@/components/AddMedication.vue'
 import StatisticsPanel from '@/components/dashboard/StatisticsPanel.vue'
-import MedicationStatistics from '@/components/dashboard/MedicationStatistics.vue'
+// TODO jlgarzon import MedicationStatistics from '@/components/dashboard/MedicationStatistics.vue'
 import TrendsPanel from '@/components/dashboard/TrendsPanel.vue'
 import ReportsList from '@/components/dashboard/ReportsList.vue'
 import PendingReviews from '@/components/dashboard/PendingReviews.vue'
@@ -98,7 +98,7 @@ export default {
     MedicationList,
     AddMedication,
     StatisticsPanel,
-    MedicationStatistics,
+    // TODO jlgarzon MedicationStatistics,
     TrendsPanel,
     ReportsList,
     PendingReviews,
@@ -132,7 +132,7 @@ export default {
     
     const tabs = [
       { id: 'statistics', name: 'Estadísticas Generales' },
-      { id: 'medication-stats', name: 'Estadísticas por Medicamento' },
+      // TODO jlgarzon { id: 'medication-stats', name: 'Estadísticas por Medicamento' },
       { id: 'trends', name: 'Tendencias' },
       { id: 'reports', name: 'Reportes' },
       { id: 'pending', name: 'Revisiones Pendientes' },
