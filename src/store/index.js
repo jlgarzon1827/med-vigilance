@@ -316,7 +316,7 @@ export default createStore({
     async exportData({ commit }, { format, filters }) {
       commit('setLoading', true)
       try {
-        let url = `http://localhost:8000/dashboard/export-${format}/`
+        let url = `http://localhost:8000/dashboard/export_${format}/`
         if (filters) {
           const queryParams = new URLSearchParams(filters).toString()
           url = `${url}?${queryParams}`
