@@ -93,11 +93,14 @@ export default {
       })
 
       if (success) {
+        // Fetch user profile with role information immediately after login
+        await store.dispatch('fetchUserProfile')
         router.push('/dashboard')
       } else {
         error.value = 'Error al iniciar sesión. Por favor, verifica tus credenciales.'
       }
     }
+
 
     return {
       username,

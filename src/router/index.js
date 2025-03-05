@@ -33,6 +33,25 @@ const routes = [
     name: 'Profile',
     component: ProfilePage,
     meta: { requiresAuth: true }
+  },
+  // Rutas protegidas para profesionales
+  {
+    path: '/dashboard/statistics',
+    name: 'Statistics',
+    component: () => import('@/components/dashboard/StatisticsPanel.vue'),
+    meta: { requiresAuth: true, requiresProfessional: true }
+  },
+  {
+    path: '/dashboard/reports',
+    name: 'Reports',
+    component: () => import('@/components/dashboard/ReportsList.vue'),
+    meta: { requiresAuth: true, requiresProfessional: true }
+  },
+  {
+    path: '/dashboard/pending',
+    name: 'PendingReviews',
+    component: () => import('@/components/dashboard/PendingReviews.vue'),
+    meta: { requiresAuth: true, requiresProfessional: true }
   }
 ]
 
@@ -42,8 +61,19 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.matched.some(record => record.meta.requiresAuth) && !store.getters.isLoggedIn) {
-    next('/login')
+  const isLoggedIn = store.getters.isLoggedIn
+  const isProfessional = store.getters.isProfessional
+  
+  // Verificar si la ruta requiere autenticación
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!isLoggedIn) {
+      next('/login')
+    } else if (to.matched.some(record => record.meta.requiresProfessional) && !isProfessional) {
+      // Si la ruta requiere ser profesional y el usuario no lo es
+      next('/dashboard')
+    } else {
+      next()
+    }
   } else {
     next()
   }

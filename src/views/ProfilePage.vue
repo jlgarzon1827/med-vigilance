@@ -12,6 +12,31 @@
           <label>Email:</label>
           <span class="profile-data">{{ userProfile?.email }}</span>
         </div>
+        <div class="form-group">
+          <label>Tipo de usuario:</label>
+          <span class="profile-data">
+            <span class="role-badge" :class="userRoleClass">
+              {{ userRoleDisplay }}
+            </span>
+          </span>
+        </div>
+        
+        <!-- Información específica para profesionales -->
+        <template v-if="isProfessional">
+          <h3>Información Profesional</h3>
+          <div class="form-group">
+            <label>ID Profesional:</label>
+            <span class="profile-data">{{ userProfile?.profile?.professional_id }}</span>
+          </div>
+          <div class="form-group">
+            <label>Especialidad:</label>
+            <span class="profile-data">{{ userProfile?.profile?.specialty }}</span>
+          </div>
+          <div class="form-group">
+            <label>Institución:</label>
+            <span class="profile-data">{{ userProfile?.profile?.institution }}</span>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -26,13 +51,28 @@ export default {
   setup() {
     const store = useStore()
     const userProfile = computed(() => store.state.userProfile)
+    
+    const isProfessional = computed(() => {
+      return userProfile.value?.profile?.user_type === 'PROFESSIONAL'
+    })
+    
+    const userRoleDisplay = computed(() => {
+      return isProfessional.value ? 'Profesional de la salud' : 'Paciente'
+    })
+    
+    const userRoleClass = computed(() => {
+      return isProfessional.value ? 'professional' : 'patient'
+    })
 
     onMounted(() => {
       store.dispatch('fetchUserProfile')
     })
 
     return {
-      userProfile
+      userProfile,
+      isProfessional,
+      userRoleDisplay,
+      userRoleClass
     }
   }
 }
@@ -74,5 +114,30 @@ export default {
   padding: 0.5rem;
   color: #2c3e50;
   font-size: 1rem;
+}
+
+h3 {
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 0.5rem;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.role-badge.professional {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.role-badge.patient {
+  background-color: #cfe2ff;
+  color: #084298;
 }
 </style>

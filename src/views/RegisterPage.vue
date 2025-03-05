@@ -55,6 +55,67 @@
           </div>
           <span v-if="errors.confirmPassword" class="error-message">{{ errors.confirmPassword }}</span>
         </div>
+        
+        <!-- Selector de tipo de usuario -->
+        <div class="form-group">
+          <div class="input-row">
+            <label for="userType">Tipo de Usuario:</label>
+            <select 
+              id="userType" 
+              v-model="userType"
+              @change="toggleProfessionalFields"
+            >
+              <option value="PATIENT">Paciente</option>
+              <option value="PROFESSIONAL">Profesional de la salud</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Campos específicos para profesionales -->
+        <div v-if="isProfessional">
+          <div class="form-group">
+            <div class="input-row">
+              <label for="professionalId">ID Profesional:</label>
+              <input 
+                type="text" 
+                id="professionalId" 
+                v-model="professionalId" 
+                placeholder="Número de colegiado"
+                required
+              >
+            </div>
+            <span v-if="errors.professionalId" class="error-message">{{ errors.professionalId }}</span>
+          </div>
+          
+          <div class="form-group">
+            <div class="input-row">
+              <label for="specialty">Especialidad:</label>
+              <input 
+                type="text" 
+                id="specialty" 
+                v-model="specialty" 
+                placeholder="Ej: Cardiología"
+                required
+              >
+            </div>
+            <span v-if="errors.specialty" class="error-message">{{ errors.specialty }}</span>
+          </div>
+          
+          <div class="form-group">
+            <div class="input-row">
+              <label for="institution">Institución:</label>
+              <input 
+                type="text" 
+                id="institution" 
+                v-model="institution" 
+                placeholder="Ej: Hospital Universitario"
+                required
+              >
+            </div>
+            <span v-if="errors.institution" class="error-message">{{ errors.institution }}</span>
+          </div>
+        </div>
+        
         <div class="button-group">
           <button type="submit" class="btn-register">Registrarse</button>
         </div>
@@ -68,7 +129,7 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 
@@ -81,13 +142,30 @@ export default {
     const email = ref('')
     const userPassword = ref('')
     const confirmUserPassword = ref('')
+    const userType = ref('PATIENT')
+    const professionalId = ref('')
+    const specialty = ref('')
+    const institution = ref('')
     const error = ref(null)
     const errors = reactive({
       username: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      professionalId: '',
+      specialty: '',
+      institution: ''
     })
+    
+    const isProfessional = computed(() => userType.value === 'PROFESSIONAL')
+    
+    const toggleProfessionalFields = () => {
+      if (!isProfessional.value) {
+        professionalId.value = ''
+        specialty.value = ''
+        institution.value = ''
+      }
+    }
 
     const validateForm = () => {
       let isValid = true
@@ -95,6 +173,9 @@ export default {
       errors.email = ''
       errors.password = ''
       errors.confirmPassword = ''
+      errors.professionalId = ''
+      errors.specialty = ''
+      errors.institution = ''
 
       if (!username.value) {
         errors.username = 'El usuario es requerido'
@@ -124,6 +205,24 @@ export default {
         errors.confirmPassword = 'Las contraseñas no coinciden'
         isValid = false
       }
+      
+      // Validaciones para campos de profesionales
+      if (isProfessional.value) {
+        if (!professionalId.value) {
+          errors.professionalId = 'El ID profesional es requerido'
+          isValid = false
+        }
+        
+        if (!specialty.value) {
+          errors.specialty = 'La especialidad es requerida'
+          isValid = false
+        }
+        
+        if (!institution.value) {
+          errors.institution = 'La institución es requerida'
+          isValid = false
+        }
+      }
 
       return isValid
     }
@@ -138,7 +237,11 @@ export default {
       const success = await store.dispatch('register', {
         username: username.value,
         email: email.value,
-        userPassword: userPassword.value
+        password: userPassword.value,
+        is_professional: isProfessional.value,
+        professional_id: professionalId.value,
+        specialty: specialty.value,
+        institution: institution.value
       })
 
       if (success) {
@@ -153,8 +256,14 @@ export default {
       email,
       userPassword,
       confirmUserPassword,
+      userType,
+      professionalId,
+      specialty,
+      institution,
+      isProfessional,
       error,
       errors,
+      toggleProfessionalFields,
       handleRegister
     }
   }
@@ -200,7 +309,7 @@ h2 {
   color: #495057;
 }
 
-.input-row input {
+.input-row input, .input-row select {
   flex: 1;
   padding: 0.5rem;
   border: 1px solid #ced4da;

@@ -39,7 +39,7 @@
               type="text" 
               id="frequency" 
               v-model="frequency" 
-              placeholder="ej: Cada 8 horas"
+              placeholder="ej: 8 horas"
               required
             >
           </div>
