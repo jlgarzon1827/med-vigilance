@@ -46,7 +46,16 @@
           <div class="report-status">
             <strong>Estado:</strong>
             <span :class="'status-badge ' + effect.status.toLowerCase()">
-              {{ effect.status === 'PENDING' ? 'Pendiente de revisión' : 'Revisado' }}
+              {{ 
+                effect.status === 'CREATED' ? 'Creado' : 
+                effect.status === 'ASSIGNED' ? 'Asignado' : 
+                effect.status === 'IN_REVISION' ? 'En Revisión' : 
+                effect.status === 'PENDING_INFORMATION' ? 'Pendiente de Información Adicional' : 
+                effect.status === 'REJECTED' ? 'Rechazado' : 
+                effect.status === 'RECLAIMED' ? 'Reclamado' : 
+                effect.status === 'APPROVED' ? 'Aprobado' : 
+                'Estado desconocido'
+              }}
             </span>
           </div>
           
@@ -179,12 +188,37 @@ h2 {
   color: #fff;
 }
 
-.status-badge.pending {
+.status-badge.creado {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-badge.asignado {
   background-color: #fff3cd;
   color: #664d03;
 }
 
-.status-badge.reviewed {
+.status-badge.en_revision {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.status-badge.pendiente_info {
+  background-color: #fff3cd;
+  color: #664d03;
+}
+
+.status-badge.rechazado {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.status-badge.reclamado {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-badge.aprobado {
   background-color: #d1e7dd;
   color: #0f5132;
 }

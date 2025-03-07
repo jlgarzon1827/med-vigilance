@@ -4,6 +4,7 @@ import LoginPage from '../views/LoginPage.vue'
 import RegisterPage from '../views/RegisterPage.vue'
 import DashboardPage from '../views/DashboardPage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
+import AdminPage from '../views/AdminPage.vue'
 import store from '../store'
 
 const routes = [
@@ -34,12 +35,32 @@ const routes = [
     component: ProfilePage,
     meta: { requiresAuth: true }
   },
+  // Rutas protegidas para administradores
+  {
+    path: '/admin',
+    name: 'AdminPage',
+    component: AdminPage,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  // Rutas protegidas para supervisores
+  {
+      path: '/supervisor-dashboard',
+      name: 'SupervisorDashboard',
+      component: () => import('@/components/dashboard/SupervisorDashboard.vue'),
+      meta: { requiresAuth: true, requiresSupervisor: true }
+  },
+  {
+    path: '/dashboard/trends',
+    name: 'TrendsPanel',
+    component: () => import('@/components/dashboard/TrendsPanel.vue'),
+    meta: { requiresAuth: true, requiresSupervisor: true }
+},
   // Rutas protegidas para profesionales
   {
     path: '/dashboard/statistics',
     name: 'Statistics',
     component: () => import('@/components/dashboard/StatisticsPanel.vue'),
-    meta: { requiresAuth: true, requiresProfessional: true }
+    meta: { requiresAuth: true, requiresSupervisor: true }
   },
   {
     path: '/dashboard/reports',
@@ -62,18 +83,39 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const isLoggedIn = store.getters.isLoggedIn
+  const isAdmin = store.getters.isAdmin
+  const isSupervisor = store.getters.isSupervisor
   const isProfessional = store.getters.isProfessional
-  
+
   // Verificar si la ruta requiere autenticación
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!isLoggedIn) {
       next('/login')
-    } else if (to.matched.some(record => record.meta.requiresProfessional) && !isProfessional) {
-      // Si la ruta requiere ser profesional y el usuario no lo es
-      next('/dashboard')
-    } else {
-      next()
+      return
     }
+
+    // Verificar permisos específicos para administradores
+    if (to.matched.some(record => record.meta.requiresAdmin) && !isAdmin) {
+      next('/dashboard')
+      return
+    }
+
+    // Verificar permisos específicos para supervisores
+    if (to.matched.some(record => record.meta.requiresSupervisor) && !isSupervisor) {
+      next('/dashboard')
+      return
+    }
+
+    // Verificar permisos específicos para profesionales o roles superiores (supervisores o administradores)
+    if (
+      to.matched.some(record => record.meta.requiresProfessionalOrSupervisorOrAdmin) &&
+      !(isProfessional || isSupervisor || isAdmin)
+    ) {
+      next('/dashboard')
+      return
+    }
+
+    next()
   } else {
     next()
   }

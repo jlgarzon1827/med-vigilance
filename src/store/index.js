@@ -85,6 +85,12 @@ export default createStore({
     setProfessionals(state, professionals) {
       state.professionals = professionals
     },
+    setSupervisorView(state, reports) {
+      state.supervisorView = reports;
+    },
+    updateSupervisorView(state, data) {
+      state.supervisorView = data;
+    },
     setAnalysisReport(state, report) {
       state.analysisReport = report
     },
@@ -148,6 +154,24 @@ export default createStore({
         console.error('Error fetching profile:', error)
       } finally {
         commit('setLoading', false)
+      }
+    },
+    async fetchUsers() {
+      try {
+        const response = await axios.get('http://localhost:8000/users/')
+        return response
+      } catch (error) {
+        console.error('Error fetching users:', error)
+        throw error
+      }
+    },
+    async updateUserRole(_, data) {
+      try {
+        await axios.post(`http://localhost:8000/users/${data.userId}/set_role/`, { role: data.newRole })
+        return true
+      } catch (error) {
+        console.error('Error updating user role:', error)
+        throw error
       }
     },
     async fetchMedications({ commit }) {
@@ -234,6 +258,35 @@ export default createStore({
         commit('setLoading', false)
       }
     },
+    async updateReportStatus({ commit }, { reportId, status }) {
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/update-status/`, { status });
+        commit('updateAdverseEffect', response.data);
+        alert(`Estado del reporte actualizado a ${status}.`);
+      } catch (error) {
+        console.error(`Error updating report status to ${status}:`, error);
+      }
+    },
+    async revertReportStatus({ commit }, reportId) {
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/revert-status/`);
+        commit('updateAdverseEffect', response.data);
+        alert('Estado revertido correctamente.');
+      } catch (error) {
+        console.error('Error reverting report status:', error);
+      }
+    },
+    async fetchSupervisorView({ commit }, filters) {
+      try {
+        const response = await axios.get('http://localhost:8000/dashboard/supervisor_view/', {
+          params: filters
+        });
+        commit('updateSupervisorView', response.data.results);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching supervisor view:', error);
+      }
+    },
     async fetchDashboardStatistics({ commit }) {
       commit('setLoading', true)
       try {
@@ -248,7 +301,7 @@ export default createStore({
     async fetchMedicationStatistics({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/medication-statistics/')
+        const response = await axios.get('http://localhost:8000/dashboard/medication_statistics/')
         commit('setMedicationStatistics', response.data)
       } catch (error) {
         console.error('Error fetching medication statistics:', error)
@@ -278,14 +331,53 @@ export default createStore({
         commit('setLoading', false);
       }
     },
-    async markAsReviewed({ commit }, id) {
+    async startReview({ commit }, id) {
       commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/mark_as_reviewed/`)
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/start_review/`)
         commit('updateAdverseEffect', response.data)
         return true
       } catch (error) {
-        console.error('Error marking as reviewed:', error)
+        console.error('Error iniciando revisión:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async approveReport({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/approve_report/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error aprobando reporte:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async rejectReport({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/reject_report/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error rechazando reporte:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async requestInfo({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/request_additional_info/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error solicitando información:', error)
         return false
       } finally {
         commit('setLoading', false)
@@ -299,16 +391,11 @@ export default createStore({
         console.error('Error fetching professionals:', error);
       }
     },
-    async assignReviewer({ commit }, { reportId, reviewerId }) {
+    async assignReviewer(_, { reportId, reviewerId }) {
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/assign-reviewer/`, {
-          reviewer_id: reviewerId,
-        });
-        console.log(response.data);
-    
-        // Example: Re-fetch pending reviews or update state
-        const updatedReviews = await axios.get('http://localhost:8000/dashboard/pending-reviews/');
-        commit('setPendingReviews', updatedReviews.data);
+        await axios.post(`http://localhost:8000/adverse-effects/${reportId}/assign-reviewer/`, { reviewer_id: reviewerId });
+        alert('Revisor asignado correctamente.');
+        await this.dispatch('fetchSupervisorView');
       } catch (error) {
         console.error('Error assigning reviewer:', error);
       }
@@ -391,11 +478,13 @@ export default createStore({
       } finally {
         commit('setLoading', false)
       }
-    }
+    },
   },
   getters: {
     isLoggedIn: state => !!state.token,
     activeTab: state => state.activeTab,
+    isAdmin: state => state.userProfile?.profile?.user_type === 'ADMIN',
+    isSupervisor: state => state.userProfile?.profile?.user_type === 'SUPERVISOR',
     isProfessional: state => {
       return state.userProfile && 
              state.userProfile.profile && 

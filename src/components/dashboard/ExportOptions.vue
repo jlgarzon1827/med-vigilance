@@ -46,8 +46,13 @@
               <label for="status">Estado:</label>
               <select id="status" v-model="filters.status">
                 <option value="">Todos</option>
-                <option value="PENDING">Pendiente</option>
-                <option value="REVIEWED">Revisado</option>
+                <option value="CREATED">Creado</option>
+                <option value="ASSIGNED">Asignado</option>
+                <option value="IN_REVISION">En Revisión</option>
+                <option value="PENDING_INFORMATION">Pendiente de Información Adicional</option>
+                <option value="REJECTED">Rechazado</option>
+                <option value="RECLAIMED">Reclamado</option>
+                <option value="APPROVED">Aprobado</option>
               </select>
             </div>
           </div>

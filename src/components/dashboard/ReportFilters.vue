@@ -42,14 +42,19 @@
           <label for="status">Estado:</label>
           <select id="status" v-model="filters.status">
             <option value="">Todos</option>
-            <option value="PENDING">Pendiente</option>
-            <option value="REVIEWED">Revisado</option>
+            <option value="CREATED">Creado</option>
+            <option value="ASSIGNED">Asignado</option>
+            <option value="IN_REVISION">En Revisión</option>
+            <option value="PENDING_INFORMATION">Pendiente de Información Adicional</option>
+            <option value="REJECTED">Rechazado</option>
+            <option value="RECLAIMED">Reclamado</option>
+            <option value="APPROVED">Aprobado</option>
           </select>
         </div>
       </div>
       
       <div class="filter-actions">
-        <button type="submit" class="btn-apply">Aplicar Filtros</button>
+        <button type="submit" @click="applyFilters" class="btn-apply">Aplicar Filtros</button>
         <button type="button" @click="resetFilters" class="btn-reset">Restablecer</button>
       </div>
     </form>
@@ -64,7 +69,7 @@ export default {
   name: 'ReportFilters',
   setup() {
     const store = useStore()
-
+    
     const filters = reactive({
       severity: '',
       type: '',

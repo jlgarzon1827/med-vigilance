@@ -6,10 +6,16 @@
       <span class="separator"> | </span>
       <router-link to="/dashboard" class="NavBar-link">Dashboard</router-link>
       
-      <!-- Enlaces específicos para profesionales -->
-      <template v-if="isProfessional">
+      <!-- Enlaces específicos para supervisores -->
+      <template v-if="isSupervisor">
         <span class="separator"> | </span>
         <router-link to="/dashboard/statistics" class="NavBar-link">Estadísticas</router-link>
+        <span class="separator"> | </span>
+        <router-link to="/dashboard/trends" class="NavBar-link">Tendencias</router-link>
+      </template>
+      
+      <!-- Enlaces específicos para profesionales -->
+      <template v-if="isProfessional">
         <span class="separator"> | </span>
         <router-link to="/dashboard/reports" class="NavBar-link">Reportes</router-link>
         <span class="separator"> | </span>
@@ -17,6 +23,14 @@
           Pendientes
           <span v-if="pendingCount" class="badge">{{ pendingCount }}</span>
         </router-link>
+      </template>
+      
+      <!-- Enlaces específicos para pacientes -->
+      <template v-if="isPatient">
+        <span class="separator"> | </span>
+        <router-link to="/dashboard/report-adverse" class="NavBar-link">Reportar Efecto Adverso</router-link>
+        <span class="separator"> | </span>
+        <router-link to="/dashboard/my-reports" class="NavBar-link">Mis Reportes</router-link>
       </template>
       
       <span class="separator"> | </span>
@@ -48,6 +62,8 @@ export default {
     const store = useStore()
     const isLoggedIn = computed(() => store.getters.isLoggedIn)
     const isProfessional = computed(() => store.getters.isProfessional)
+    const isSupervisor = computed(() => store.getters.isSupervisor)
+    const isPatient = computed(() => store.getters.isPatient)
     const pendingCount = computed(() => {
       return store.state.pendingReviews?.pending || 0
     })
@@ -60,6 +76,8 @@ export default {
     return {
       isLoggedIn,
       isProfessional,
+      isSupervisor,
+      isPatient,
       pendingCount,
       handleLogout
     }

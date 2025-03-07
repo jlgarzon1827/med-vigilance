@@ -20,7 +20,7 @@
             </span>
           </span>
         </div>
-        
+
         <!-- Información específica para profesionales -->
         <template v-if="isProfessional">
           <h3>Información Profesional</h3>
@@ -37,6 +37,13 @@
             <span class="profile-data">{{ userProfile?.profile?.institution }}</span>
           </div>
         </template>
+
+        <!-- Información específica para administradores -->
+        <template v-if="isAdmin || isSupervisor">
+          <h3>Información de Gestión</h3>
+          <p>{{ isAdmin ? 'Tienes acceso al panel de administración.' : 'Tienes acceso a supervisión de reportes.' }}</p>
+        </template>
+
       </div>
     </div>
   </div>
@@ -51,17 +58,31 @@ export default {
   setup() {
     const store = useStore()
     const userProfile = computed(() => store.state.userProfile)
-    
+
+    const isAdmin = computed(() => {
+      return userProfile.value?.profile?.user_type === 'ADMIN'
+    })
+
+    const isSupervisor = computed(() => {
+      return userProfile.value?.profile?.user_type === 'SUPERVISOR'
+    })
+
     const isProfessional = computed(() => {
       return userProfile.value?.profile?.user_type === 'PROFESSIONAL'
     })
-    
+
     const userRoleDisplay = computed(() => {
-      return isProfessional.value ? 'Profesional de la salud' : 'Paciente'
+      if (isAdmin.value) return 'Administrador del sistema'
+      if (isSupervisor.value) return 'Supervisor'
+      if (isProfessional.value) return 'Profesional de la salud'
+      return 'Paciente'
     })
-    
+
     const userRoleClass = computed(() => {
-      return isProfessional.value ? 'professional' : 'patient'
+      if (isAdmin.value) return 'admin'
+      if (isSupervisor.value) return 'supervisor'
+      if (isProfessional.value) return 'professional'
+      return 'patient'
     })
 
     onMounted(() => {
@@ -70,6 +91,8 @@ export default {
 
     return {
       userProfile,
+      isAdmin,
+      isSupervisor,
       isProfessional,
       userRoleDisplay,
       userRoleClass
@@ -113,22 +136,22 @@ export default {
   flex: 1;
   padding: 0.5rem;
   color: #2c3e50;
-  font-size: 1rem;
-}
-
-h3 {
-  margin-top: 2rem;
-  margin-bottom: 1.5rem;
-  color: #2c3e50;
-  border-bottom: 1px solid #e9ecef;
-  padding-bottom: 0.5rem;
 }
 
 .role-badge {
   display: inline-block;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  font-size: 0.875rem;
+}
+
+.role-badge.admin {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.role-badge.supervisor {
+  background-color: #fff3cd;
+  color: #856404;
 }
 
 .role-badge.professional {
