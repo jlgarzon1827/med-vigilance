@@ -24,9 +24,22 @@
             <tr v-for="report in filteredReports" :key="report.id">
               <td>{{ report.id }}</td>
               <td>{{ report.description }}</td>
-              <td>{{ report.status }}</td>
               <td>
-                <button @click="revertStatus(report)" class="btn-revert">Revertir Estado</button>
+                <span :class="'status-badge ' + report.status.toLowerCase()">
+                  {{ 
+                    report.status === 'CREATED' ? 'Creado' : 
+                    report.status === 'ASSIGNED' ? 'Asignado' : 
+                    report.status === 'IN_REVISION' ? 'En Revisión' : 
+                    report.status === 'PENDING_INFORMATION' ? 'Pendiente de Información Adicional' : 
+                    report.status === 'REJECTED' ? 'Rechazado' : 
+                    report.status === 'RECLAIMED' ? 'Reclamado' : 
+                    report.status === 'APPROVED' ? 'Aprobado' : 
+                    'Estado desconocido'
+                  }}
+                </span>
+              </td>
+              <td>
+                <button @click="revertStatus(report)" class="btn btn-primary">Revertir Estado</button>
                 <select v-if="professionals.length" @change="assignReviewer(report, $event)">
                   <option value="">Asignar Revisor</option>
                   <option v-for="professional in professionals" :key="professional.id" :value="professional.id">{{ professional.username }}</option>
@@ -97,11 +110,13 @@ export default {
 
 <style scoped>
 .supervisor-dashboard {
+  width: 100%;
   padding: 20px;
 }
 
 .table-container {
-  margin-top: 20px;
+  margin-top: 1.5rem;
+  overflow-x: auto;
 }
 
 table {
@@ -110,12 +125,101 @@ table {
 }
 
 th, td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+th {
+  background-color: #f8f9fa;
+  color: #2c3e50;
+  font-weight: 600;
 }
 
 .no-data {
   text-align: center;
-  color: #888;
+  padding: 2rem;
+  color: #6c757d;
+  font-style: italic;
 }
+
+/* Botones generales */
+button {
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: inherit;
+}
+
+/* Botón para revertir estado */
+.btn-revert {
+  background-color: #e4fdff;
+  color: #000;
+}
+
+/* Botón para asignar revisor */
+select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: inherit;
+  border: none;
+}
+
+select:focus {
+  outline: none;
+}
+
+/* Badge para contar pendientes */
+.badge {
+  display: inline-block;
+  background-color: #dc3545;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  margin-left: 5px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.status-badge.creado {
+  background-color: #d1e7dd; /* Verde claro */
+  color: #0f5132; /* Verde oscuro */
+}
+
+.status-badge.asignado {
+  background-color: #fff3cd; /* Amarillo claro */
+  color: #664d03; /* Amarillo oscuro */
+}
+
+.status-badge.en_revision {
+  background-color: #f8d7da; /* Rojo claro */
+  color: #842029; /* Rojo oscuro */
+}
+
+.status-badge.pendiente_info {
+  background-color: #fff3cd; /* Amarillo claro */
+  color: #664d03; /* Amarillo oscuro */
+}
+
+.status-badge.rechazado {
+  background-color: #f8d7da; /* Rojo claro */
+  color: #842029; /* Rojo oscuro */
+}
+
+.status-badge.reclamado {
+  background-color: #d1e7dd; /* Verde claro */
+  color: #0f5132; /* Verde oscuro */
+}
+
+.status-badge.aprobado {
+  background-color: #d1e7dd; /* Verde claro */
+  color: #0f5132; /* Verde oscuro */
+}
+
 </style>
+

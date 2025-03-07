@@ -337,17 +337,10 @@ th {
   color: #0f5132; /* Verde oscuro */
 }
 
-/* Botones generales */
 button {
   padding: 0.5rem;
   border-radius: 4px;
   font-size: inherit;
-}
-
-/* Botón para ver detalles */
-.btn-view {
-  background-color: #e4fdff; /* Azul muy claro */
-  color: #000;
 }
 
 /* Botón para iniciar revisión */
@@ -368,6 +361,12 @@ button {
 /* Botón para solicitar información adicional */
 .btn-request-info {
   background-color: #ffc107; /* Amarillo intenso */
+}
+
+/* Botón para ver detalles */
+.btn-view {
+  background-color: #e4fdff; /* Azul muy claro */
+  color: #000;
 }
 
 /* Hover effects para botones generales */
