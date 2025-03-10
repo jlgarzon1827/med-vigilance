@@ -96,7 +96,10 @@ export default createStore({
     },
     setCorrelationAnalysis(state, analysis) {
       state.correlationAnalysis = analysis
-    }
+    },
+    setSelectedReport(state, report) {
+      state.selectedReport = report;
+    },
   },
   actions: {
     async login({ commit }, { username, userPassword }) {
@@ -244,6 +247,19 @@ export default createStore({
         commit('setLoading', false);
       }
     },
+    async fetchReportDetails({ commit }, id) {
+      commit('setLoading', true);
+      try {
+        const response = await axios.get(`http://localhost:8000/adverse-effects/${id}/`);
+        commit('setSelectedReport', response.data);
+        return true;
+      } catch (error) {
+        console.error('Error obteniendo detalles del reporte:', error);
+        return false;
+      } finally {
+        commit('setLoading', false);
+      }
+    },    
     async reportAdverseEffect({ commit, state }, adverseEffectData) {
       commit('setLoading', true)
       try {
@@ -267,15 +283,19 @@ export default createStore({
         console.error(`Error updating report status to ${status}:`, error);
       }
     },
-    async revertReportStatus({ commit }, reportId) {
+    async revertReportStatus({ commit }, { reportId, reason }) {
+      commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/revert-status/`);
-        commit('updateAdverseEffect', response.data);
-        alert('Estado revertido correctamente.');
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/revert_status/`, { reason })
+        commit('updateAdverseEffect', response.data)
+        return true
       } catch (error) {
-        console.error('Error reverting report status:', error);
+        console.error('Error al revertir estado:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
       }
-    },
+    },    
     async fetchSupervisorView({ commit }, filters) {
       try {
         const response = await axios.get('http://localhost:8000/dashboard/supervisor_view/', {
@@ -329,19 +349,6 @@ export default createStore({
         console.error('Error fetching pending reviews:', error);
       } finally {
         commit('setLoading', false);
-      }
-    },
-    async revertStatus({ commit }, id) {
-      commit('setLoading', true)
-      try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/revert_status/`)
-        commit('updateAdverseEffect', response.data)
-        return true
-      } catch (error) {
-        console.error('Error revertiendo estado:', error)
-        return false
-      } finally {
-        commit('setLoading', false)
       }
     },
     async approveReclamation({ commit }, id) {

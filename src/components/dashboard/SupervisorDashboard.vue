@@ -38,8 +38,18 @@
                   }}
                 </span>
               </td>
+              <!-- Acciones -->
               <td>
-                <button @click="revertStatus(report)" class="btn btn-primary">Revertir Estado</button>
+                <!-- Botón para revertir estado -->
+                <button @click="openRevertModal(report)" class="btn btn-revert">Revertir Estado</button>
+
+                <!-- Botón para revisar reclamación -->
+                <button v-if="report.status === 'RECLAIMED'" @click="openReclamationModal(report)" class="btn btn-primary">Revisar Reclamación</button>
+
+                <!-- Botón para ver detalles -->
+                <button @click="openDetailModal(report.id)" class="btn btn-info">Ver</button>
+
+                <!-- Dropdown para cambiar estado -->
                 <select @change="changeStatus(report, $event)">
                   <option value="">Cambiar Estado</option>
                   <option value="CREATED">Creado</option>
@@ -50,12 +60,18 @@
                   <option value="RECLAIMED">Reclamado</option>
                   <option value="APPROVED">Aprobado</option>
                 </select>
+
+                <!-- Dropdown para asignar revisor -->
                 <select v-if="professionals.length" @change="assignReviewer(report, $event)">
                   <option value="">Asignar Revisor</option>
                   <option v-for="professional in professionals" :key="professional.id" :value="professional.id">{{ professional.username }}</option>
                 </select>
+
+                <!-- Mensaje si no hay profesionales disponibles -->
                 <p v-else>No hay profesionales disponibles.</p>
               </td>
+
+              <!-- Revisor asignado -->
               <td>{{ report.reviewer ? report.reviewer.username : 'No asignado' }}</td>
             </tr>
           </tbody>
@@ -63,6 +79,16 @@
 
         <!-- Mensaje cuando no hay datos -->
         <p v-else class="no-data">No hay reportes disponibles.</p>
+
+        <!-- Modales -->
+        <!-- Modal para revertir estado -->
+        <ModalRevertStatus v-if="showRevertModal" @close="showRevertModal = false" :reportId="selectedReportId" />
+
+        <!-- Modal para revisar reclamación -->
+        <ModalReclamation v-if="showReclamationModal" @close="showReclamationModal = false" :reportId="selectedReportId" />
+
+        <!-- Modal para ver detalles -->
+        <ModalSupReportDetail v-if="showDetailModal" :report="selectedReport" @close="showDetailModal = false"/>
       </div>
     </div>
   </div>
@@ -73,16 +99,25 @@ import { ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import ReportFilters from '@/components/dashboard/ReportFilters.vue';
+import ModalRevertStatus from '@/components/dashboard/ModalRevertStatus.vue';
+import ModalReclamation from '@/components/dashboard/ModalReviewReclamation.vue';
+import ModalSupReportDetail from '@/components/dashboard/ModalSupReportDetail.vue';
 
 export default {
   name: 'SupervisorDashboard',
-  components: { LoadingSpinner, ReportFilters },
+  components: { LoadingSpinner, ReportFilters, ModalRevertStatus, ModalReclamation, ModalSupReportDetail },
   setup() {
     const store = useStore();
     const isLoading = computed(() => store.state.isLoading);
     const reports = computed(() => store.state.supervisorView || []);
-    const filters = ref({});
     const professionals = computed(() => store.state.professionals || []);
+    const filters = ref({});
+    
+    const showRevertModal = ref(false);
+    const showReclamationModal = ref(false);
+    const showDetailModal = ref(false);
+    const selectedReportId = ref(null);
+    const selectedReport = ref(null);
 
     const filteredReports = computed(() => {
       if (!filters.value.status) return reports.value;
@@ -91,14 +126,28 @@ export default {
 
     const applyFilters = async (newFilters) => {
       filters.value = newFilters;
-      const response = await store.dispatch('fetchSupervisorView', newFilters);
-      // Actualiza el estado local con los datos filtrados
-      store.commit('updateSupervisorView', response);
+      await store.dispatch('fetchSupervisorView', newFilters);
     };
 
-    const revertStatus = async (report) => {
-      await store.dispatch('revertReportStatus', report.id);
-      alert('Estado revertido correctamente.');
+    const openRevertModal = (report) => {
+      selectedReportId.value = report.id;
+      showRevertModal.value = true;
+    };
+
+    const openReclamationModal = (report) => {
+      selectedReportId.value = report.id;
+      showReclamationModal.value = true;
+    };
+
+    const openDetailModal = async (id) => {
+      try {
+        await store.dispatch('fetchReportDetails', id);
+        selectedReport.value = store.state.selectedReport;
+        showDetailModal.value = true; 
+      } catch (error) {
+        console.error('Error al obtener los detalles del reporte:', error);
+        alert('No se pudieron cargar los detalles del reporte.');
+      }
     };
 
     const assignReviewer = async (report, event) => {
@@ -120,7 +169,22 @@ export default {
       store.dispatch('fetchProfessionals');
     });
 
-    return { isLoading, reports, filteredReports, applyFilters, revertStatus, assignReviewer, changeStatus, professionals };
+    return {
+      isLoading,
+      reports,
+      filteredReports,
+      applyFilters,
+      openRevertModal,
+      openReclamationModal,
+      openDetailModal,
+      assignReviewer,
+      changeStatus,
+      professionals,
+      showRevertModal,
+      showReclamationModal,
+      showDetailModal,
+      selectedReportId
+    };
   },
 };
 </script>
