@@ -40,6 +40,16 @@
               </td>
               <td>
                 <button @click="revertStatus(report)" class="btn btn-primary">Revertir Estado</button>
+                <select @change="changeStatus(report, $event)">
+                  <option value="">Cambiar Estado</option>
+                  <option value="CREATED">Creado</option>
+                  <option value="ASSIGNED">Asignado</option>
+                  <option value="IN_REVISION">En Revisión</option>
+                  <option value="PENDING_INFORMATION">Pendiente de Información Adicional</option>
+                  <option value="REJECTED">Rechazado</option>
+                  <option value="RECLAIMED">Reclamado</option>
+                  <option value="APPROVED">Aprobado</option>
+                </select>
                 <select v-if="professionals.length" @change="assignReviewer(report, $event)">
                   <option value="">Asignar Revisor</option>
                   <option v-for="professional in professionals" :key="professional.id" :value="professional.id">{{ professional.username }}</option>
@@ -98,12 +108,19 @@ export default {
       }
     };
 
+    const changeStatus = async (report, event) => {
+      if (event.target.value) {
+        await store.dispatch('updateReportStatus', { reportId: report.id, status: event.target.value });
+        alert(`Estado del reporte actualizado a ${event.target.value}.`);
+      }
+    };
+
     onMounted(() => {
       store.dispatch('fetchSupervisorView');
       store.dispatch('fetchProfessionals');
     });
 
-    return { isLoading, reports, filteredReports, applyFilters, revertStatus, assignReviewer, professionals };
+    return { isLoading, reports, filteredReports, applyFilters, revertStatus, assignReviewer, changeStatus, professionals };
   },
 };
 </script>

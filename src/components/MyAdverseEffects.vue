@@ -62,27 +62,72 @@
           <div class="report-date">
             <strong>Reportado el:</strong> {{ formatDate(effect.reported_at) }}
           </div>
+          
+          <!-- Acciones -->
+          <div class="report-actions">
+            <!-- Botón para iniciar reclamación -->
+            <button
+              v-if="effect.status === 'REJECTED'"
+              @click="openReclamationModal(effect.id)"
+              class="btn btn-primary"
+            >
+              Iniciar Reclamación
+            </button>
+
+            <!-- Botón para proporcionar información adicional -->
+            <button
+              v-if="effect.status === 'PENDING_INFORMATION'"
+              @click="openAdditionalInfoModal(effect)"
+              class="btn btn-primary"
+            >
+              Proporcionar Información Adicional
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- Modal para reclamación -->
+      <ModalReclamation
+        v-if="showReclamationModal"
+        @close="showReclamationModal = false"
+        :reportId="reclamationReportId"
+      />
+
+      <!-- Modal para información adicional -->
+      <ModalAdditionalInfo
+        v-if="showAdditionalInfoModal"
+        @close="showAdditionalInfoModal = false"
+        :report="additionalInfoReport"
+      />
       
       <div v-else class="no-reports">
         <p>No has reportado ningún efecto adverso todavía.</p>
         <button @click="goToReportForm" class="btn-report">Reportar un efecto adverso</button>
       </div>
     </div>
+    
+    <!-- Modal para reclamación -->
+    <ModalReclamation v-if="showReclamationModal" @close="showReclamationModal = false" :reportId="reclamationReportId" />
+    
+    <!-- Modal para información adicional -->
+    <ModalAdditionalInfo v-if="showAdditionalInfoModal" @close="showAdditionalInfoModal = false" :report="additionalInfoReport" />
   </div>
 </template>
 
 <script>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import ModalReclamation from '@/components/dashboard/ModalReclamation.vue'
+import ModalAdditionalInfo from '@/components/dashboard/ModalAdditionalInfo.vue'
 
 export default {
   name: 'MyAdverseEffects',
   components: {
-    LoadingSpinner
+    LoadingSpinner,
+    ModalReclamation,
+    ModalAdditionalInfo
   },
   setup() {
     const store = useStore()
@@ -106,6 +151,22 @@ export default {
       router.replace('/dashboard');
     }
     
+    const showReclamationModal = ref(false)
+    const reclamationReportId = ref(null)
+    
+    const openReclamationModal = (id) => {
+      showReclamationModal.value = true
+      reclamationReportId.value = id
+    }
+    
+    const showAdditionalInfoModal = ref(false)
+    const additionalInfoReport = ref(null)
+    
+    const openAdditionalInfoModal = (report) => {
+      showAdditionalInfoModal.value = true
+      additionalInfoReport.value = report
+    }
+    
     onMounted(() => {
       store.dispatch('fetchAdverseEffects')
       if (!medications.value.length) {
@@ -118,7 +179,13 @@ export default {
       adverseEffects,
       formatDate,
       getMedicationName,
-      goToReportForm
+      goToReportForm,
+      openReclamationModal,
+      showReclamationModal,
+      reclamationReportId,
+      openAdditionalInfoModal,
+      showAdditionalInfoModal,
+      additionalInfoReport
     }
   }
 }

@@ -331,6 +331,45 @@ export default createStore({
         commit('setLoading', false);
       }
     },
+    async revertStatus({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/revert_status/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error revertiendo estado:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async approveReclamation({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/approve_reclamation/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error aprobando reclamación:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async rejectReclamation({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/reject_reclamation/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error rechazando reclamación:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
     async startReview({ commit }, id) {
       commit('setLoading', true)
       try {
@@ -344,6 +383,21 @@ export default createStore({
         commit('setLoading', false)
       }
     },
+    async requestInfo({ commit }, id) {
+      commit('setLoading', true);
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/request_additional_info/`);
+        commit('updateAdverseEffect', response.data);
+        alert('Información adicional solicitada correctamente.');
+        return true;
+      } catch (error) {
+        console.error('Error solicitando información adicional:', error);
+        alert('Error solicitando información adicional.');
+        return false;
+      } finally {
+        commit('setLoading', false);
+      }
+    },    
     async approveReport({ commit }, id) {
       commit('setLoading', true)
       try {
@@ -370,19 +424,40 @@ export default createStore({
         commit('setLoading', false)
       }
     },
-    async requestInfo({ commit }, id) {
-      commit('setLoading', true)
+    async startReclamation({ commit }, { id, reason }) {
+      commit('setLoading', true);
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/request_additional_info/`)
-        commit('updateAdverseEffect', response.data)
-        return true
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/start_reclamation/`, {
+          reclamation_reason: reason,
+        });
+        commit('updateAdverseEffect', response.data);
+        alert('Reclamación iniciada correctamente.');
+        return true;
       } catch (error) {
-        console.error('Error solicitando información:', error)
-        return false
+        console.error('Error iniciando reclamación:', error);
+        alert('Error iniciando reclamación.');
+        return false;
       } finally {
-        commit('setLoading', false)
+        commit('setLoading', false);
       }
-    },
+    },    
+    async provideAdditionalInfo({ commit }, { id, info }) {
+      commit('setLoading', true);
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/provide_additional_info/`, {
+          additional_info: info,
+        });
+        commit('updateAdverseEffect', response.data);
+        alert('Información adicional proporcionada correctamente.');
+        return true;
+      } catch (error) {
+        console.error('Error proporcionando información adicional:', error);
+        alert('Error proporcionando información adicional.');
+        return false;
+      } finally {
+        commit('setLoading', false);
+      }
+    },    
     async fetchProfessionals({ commit }) {
       try {
         const response = await axios.get('http://localhost:8000/users/?user_type=PROFESSIONAL');
