@@ -6,7 +6,7 @@
       <h2>Vista General de Reportes</h2>
       
       <!-- Filtros -->
-      <ReportFilters @filter-changed="applyFilters" />
+      <ReportFiltersSup/>
 
       <!-- Tabla de Reportes -->
       <div class="table-container">
@@ -41,10 +41,10 @@
               <!-- Acciones -->
               <td>
                 <!-- Botón para revertir estado -->
-                <button @click="openRevertModal(report)" class="btn btn-revert">Revertir Estado</button>
+                <button button v-if="report.status === 'APPROVED'" @click="openRevertModal(report)" class="btn btn-revert">Revertir Estado</button>
 
                 <!-- Botón para revisar reclamación -->
-                <button v-if="report.status === 'RECLAIMED'" @click="openReclamationModal(report)" class="btn btn-primary">Revisar Reclamación</button>
+                <button v-if="report.status === 'RECLAIMED'" @click="openReclamationModal(report.id)" class="btn btn-primary">Revisar Reclamación</button>
 
                 <!-- Botón para ver detalles -->
                 <button @click="openDetailModal(report.id)" class="btn btn-info">Ver</button>
@@ -72,7 +72,7 @@
               </td>
 
               <!-- Revisor asignado -->
-              <td>{{ report.reviewer ? report.reviewer.username : 'No asignado' }}</td>
+              <td>{{ getReviewerName(report.reviewer) }}</td>
             </tr>
           </tbody>
         </table>
@@ -82,13 +82,13 @@
 
         <!-- Modales -->
         <!-- Modal para revertir estado -->
-        <ModalRevertStatus v-if="showRevertModal" @close="showRevertModal = false" :reportId="selectedReportId" />
+        <ModalRevertStatus v-if="showRevertModal" @close="handleRevertModalClose" :reportId="selectedReportId" :key="RevertModalKey" />
 
         <!-- Modal para revisar reclamación -->
-        <ModalReclamation v-if="showReclamationModal" @close="showReclamationModal = false" :reportId="selectedReportId" />
+        <ModalReclamation v-if="showReclamationModal" @close="handleReclamationModalClose" :report="selectedReport" :key="ReclamationModalKey" />
 
         <!-- Modal para ver detalles -->
-        <ModalSupReportDetail v-if="showDetailModal" :report="selectedReport" @close="showDetailModal = false"/>
+        <ModalSupReportDetail v-if="showDetailModal" @close="showDetailModal = false" :report="selectedReport"/>
       </div>
     </div>
   </div>
@@ -98,20 +98,22 @@
 import { ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
-import ReportFilters from '@/components/dashboard/ReportFilters.vue';
+import ReportFiltersSup from '@/components/dashboard/ReportFiltersSup.vue';
 import ModalRevertStatus from '@/components/dashboard/ModalRevertStatus.vue';
 import ModalReclamation from '@/components/dashboard/ModalReviewReclamation.vue';
 import ModalSupReportDetail from '@/components/dashboard/ModalSupReportDetail.vue';
 
 export default {
   name: 'SupervisorDashboard',
-  components: { LoadingSpinner, ReportFilters, ModalRevertStatus, ModalReclamation, ModalSupReportDetail },
+  components: { LoadingSpinner, ReportFiltersSup, ModalRevertStatus, ModalReclamation, ModalSupReportDetail },
   setup() {
     const store = useStore();
     const isLoading = computed(() => store.state.isLoading);
     const reports = computed(() => store.state.supervisorView || []);
     const professionals = computed(() => store.state.professionals || []);
     const filters = ref({});
+    const ReclamationModalKey = ref(0);
+    const RevertModalKey = ref(0);
     
     const showRevertModal = ref(false);
     const showReclamationModal = ref(false);
@@ -124,30 +126,46 @@ export default {
       return reports.value.filter(report => report.status === filters.value.status);
     });
 
-    const applyFilters = async (newFilters) => {
-      filters.value = newFilters;
-      await store.dispatch('fetchSupervisorView', newFilters);
-    };
-
-    const openRevertModal = (report) => {
-      selectedReportId.value = report.id;
-      showRevertModal.value = true;
-    };
-
-    const openReclamationModal = (report) => {
-      selectedReportId.value = report.id;
-      showReclamationModal.value = true;
-    };
-
-    const openDetailModal = async (id) => {
+    const getReportData = async (id) => {
       try {
         await store.dispatch('fetchReportDetails', id);
         selectedReport.value = store.state.selectedReport;
-        showDetailModal.value = true; 
       } catch (error) {
         console.error('Error al obtener los detalles del reporte:', error);
         alert('No se pudieron cargar los detalles del reporte.');
       }
+    };
+
+    // Función para obtener el nombre del revisor
+    const getReviewerName = (reviewerId) => {
+      const reviewer = professionals.value.find(professional => professional.id === reviewerId);
+      return reviewer ? reviewer.username : 'No asignado';
+    };
+
+    const openRevertModal = (report) => {
+      console.log('ID del reporte seleccionado:', report.id);
+      selectedReportId.value = report.id;
+      showRevertModal.value = true;
+    };
+
+    const handleRevertModalClose = () => {
+      showRevertModal.value = false;
+      RevertModalKey.value += 1;
+    };
+
+    const openReclamationModal = async (id) => {
+      getReportData(id)
+      showReclamationModal.value = true;
+    };
+
+    const handleReclamationModalClose = () => {
+      showReclamationModal.value = false;
+      ReclamationModalKey.value += 1;
+    };
+
+    const openDetailModal = async (id) => {
+      getReportData(id)
+      showDetailModal.value = true; 
     };
 
     const assignReviewer = async (report, event) => {
@@ -173,9 +191,12 @@ export default {
       isLoading,
       reports,
       filteredReports,
-      applyFilters,
       openRevertModal,
+      RevertModalKey,
+      handleRevertModalClose,
       openReclamationModal,
+      ReclamationModalKey,
+      handleReclamationModalClose,
       openDetailModal,
       assignReviewer,
       changeStatus,
@@ -183,7 +204,9 @@ export default {
       showRevertModal,
       showReclamationModal,
       showDetailModal,
-      selectedReportId
+      selectedReportId,
+      selectedReport,
+      getReviewerName,
     };
   },
 };

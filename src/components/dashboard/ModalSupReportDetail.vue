@@ -11,33 +11,105 @@
       <div class="modal-body">
         <!-- Información General -->
         <div v-if="report" class="info-section">
-          <h3>Información General</h3>
-          <p><strong>Paciente:</strong> {{ report.patient_name || `Usuario ${report.patient}` }}</p>
-          <p><strong>Medicamento:</strong> {{ report.medicamento_nombre }}</p>
-          <p><strong>Estado:</strong> 
-            <span :class="'status-badge ' + report.status.toLowerCase()">
-              {{ mapStatus(report.status) }}
-            </span>
-          </p>
-          <p><strong>Severidad:</strong> 
-            <span :class="'severity-badge ' + report.severity.toLowerCase()">
-              {{ report.severity }}
-            </span>
-          </p>
-        </div>
+          <!-- Información General -->
+          <div class="info-section">
+              <h3>Información General</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="label">Paciente:</span>
+                  <span class="value">{{ report.patient_name || 'Usuario ' + report.patient }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Medicamento:</span>
+                  <span class="value">{{ report.medicamento_nombre || 'Med ' + report.medication }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Fecha Reporte:</span>
+                  <span class="value">{{ formatDate(report.reported_at) }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Estado:</span>
+                  <span :class="'status-badge ' + report.status.toLowerCase()">
+                    {{ 
+                      report.status === 'CREATED' ? 'Creado' : 
+                      report.status === 'ASSIGNED' ? 'Asignado' : 
+                      report.status === 'IN_REVISION' ? 'En Revisión' : 
+                      report.status === 'PENDING_INFORMATION' ? 'Pendiente de Información Adicional' : 
+                      report.status === 'REJECTED' ? 'Rechazado' : 
+                      report.status === 'RECLAIMED' ? 'Reclamado' : 
+                      report.status === 'APPROVED' ? 'Aprobado' : 
+                      'Estado desconocido'
+                    }}
+                  </span>
+                </div>
+              </div>
 
-        <!-- Mensaje si no hay datos -->
-        <div v-else>
-          <p>No hay datos disponibles para este reporte.</p>
-        </div>
+              <!-- Detalles del Efecto Adverso -->
+              <div class="info-section">
+                <h3>Detalles del Efecto Adverso</h3>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <span class="label">Severidad:</span>
+                    <span :class="'severity-badge ' + report.severity.toLowerCase()">{{ report.severity }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Tipo:</span>
+                    <span class="value">{{ report.type }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Fecha Inicio:</span>
+                    <span class="value">{{ report.start_date }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Fecha Fin:</span>
+                    <span class="value">{{ report.end_date || 'No especificada' }}</span>
+                  </div>
+                </div>
+              </div>
 
-        <!-- Acciones -->
-        <div class="modal-actions">
-          <button type="button" class="btn-close-bottom" @click="$emit('close')">Cerrar</button>
-        </div>
+              <!-- Descripción -->
+              <div class="info-section">
+                <h3>Descripción</h3>
+                <p class="description">{{ report.description }}</p>
+              </div>
+
+              <!-- Información de Administración -->
+              <div class="info-section">
+                <h3>Administración</h3>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <span class="label">Vía:</span>
+                    <span class="value">{{ report.administration_route }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Dosis:</span>
+                    <span class="value">{{ report.dosage }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Frecuencia:</span>
+                    <span class="value">{{ report.frequency }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Información Adicional -->
+              <div v-if="report.additional_info" class="info-section">
+                <h3>Información Adicional</h3>
+                <p>{{ report.additional_info }}</p>
+              </div>
+
+            <!-- Acciones -->
+            <div class="modal-actions">
+              <button type="button" class="btn-close-bottom" @click="$emit('close')">Cerrar</button>
+            </div>
+          </div>
+      </div>
+      <div v-else>
+        <p>No hay datos disponibles para este reporte.</p>
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
@@ -125,4 +197,16 @@ export default {
 .severity-badge {
   display: inline-block;
 }
+
+.info-section h3 {
+  color: #2c3e50;
+}
+
+.info-grid {
+  display: grid; 
+}
+
+/* Botón inferior */
+.btn-close-bottom {
+ background-color:#f8f9fa;}
 </style>

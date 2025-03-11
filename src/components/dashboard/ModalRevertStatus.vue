@@ -40,18 +40,17 @@ import { useStore } from 'vuex'
 export default {
   name: 'ModalRevertStatus',
   props: {
-    reportId: Number, // ID del reporte asociado al cambio de estado
+    reportId: Number,
   },
   setup(props, { emit }) {
     const store = useStore()
-    const revertReason = ref('') // Campo para almacenar el motivo del cambio de estado
+    const revertReason = ref('')
 
     const revertStatus = async () => {
       try {
-        // Llama a la acción del store para revertir el estado
-        await store.dispatch('revertReportStatus', { id: props.reportId, reason: revertReason.value })
+        await store.dispatch('revertReportStatus', { reportId: props.reportId, reason: revertReason.value })
         alert('Estado revertido correctamente.')
-        emit('close') // Cierra el modal después de realizar la acción
+        emit('close')
       } catch (error) {
         console.error('Error al revertir el estado:', error)
         alert('Ocurrió un error al intentar revertir el estado.')

@@ -45,7 +45,7 @@ export default {
       try {
         await store.dispatch('startReclamation', { id: props.reportId, reason: reclamationReason.value })
         alert('Reclamación iniciada correctamente.')
-        emit('close') // Cierra el modal
+        emit('close')
       } catch (error) {
         console.error('Error iniciando reclamación:', error)
         alert('Ocurrió un error al iniciar la reclamación.')
