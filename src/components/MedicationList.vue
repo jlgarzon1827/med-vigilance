@@ -1,20 +1,20 @@
 <template>
   <div class="medication-list">
     <LoadingSpinner v-if="isLoading"/>
-    <table v-else-if="medications.length">
+    <table v-else-if="isDataReady && medications.length">
       <thead>
         <tr>
-          <th>Nombre</th>
-          <th>Dosis</th>
-          <th>Frecuencia</th>
+          <th>Nombre del Medicamento Maestro</th>
+          <th>Dosis Personalizada</th>
+          <th>Frecuencia Personalizada</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="medication in medications" :key="medication.id">
-          <td>{{ medication.nombre }}</td>
-          <td>{{ medication.dosis }}</td>
-          <td>{{ medication.frecuencia }}</td>
+          <td>{{ getMasterMedicationName(medication.medicamento_maestro_id) }}</td>
+          <td>{{ medication.dosis_personalizada }}</td>
+          <td>{{ medication.frecuencia_personalizada }}</td>
           <td>
             <button @click="editMedication(medication)" class="btn-edit">Editar</button>
             <button @click="confirmDelete(medication)" class="btn-delete">Borrar</button>
@@ -22,6 +22,7 @@
         </tr>
       </tbody>
     </table>
+    <p v-else-if="!isDataReady">Cargando...</p>
     <p v-else>No hay medicamentos registrados.</p>
     <div class="add-button-container">
       <button @click="$emit('showAddModal')" class="btn-add">Añadir Medicamento</button>
@@ -33,35 +34,31 @@
         <h2>Editar Medicamento</h2>
         <form @submit.prevent="handleEdit">
           <div class="form-group">
-            <label for="edit-name">Nombre:</label>
+            <label for="edit-name">Nombre del Medicamento Maestro:</label>
             <input 
               type="text" 
               id="edit-name" 
-              v-model="editForm.nombre" 
-              placeholder="ej: Paracetamol"
-              required
+              v-model="editForm.medicamento_maestro_nombre" 
+              disabled
             >
-            <span v-if="errors.nombre" class="error-message">{{ errors.nombre }}</span>
           </div>
           <div class="form-group">
-            <label for="edit-dosis">Dosis:</label>
+            <label for="edit-dosis">Dosis Personalizada:</label>
             <input 
               type="text" 
               id="edit-dosis" 
-              v-model="editForm.dosis" 
+              v-model="editForm.dosis_personalizada" 
               placeholder="ej: 500mg"
-              required
             >
             <span v-if="errors.dosis" class="error-message">{{ errors.dosis }}</span>
           </div>
           <div class="form-group">
-            <label for="edit-frecuencia">Frecuencia:</label>
+            <label for="edit-frecuencia">Frecuencia Personalizada:</label>
             <input 
               type="text" 
               id="edit-frecuencia" 
-              v-model="editForm.frecuencia" 
+              v-model="editForm.frecuencia_personalizada" 
               placeholder="ej: 8 horas"
-              required
             >
             <span v-if="errors.frecuencia" class="error-message">{{ errors.frecuencia }}</span>
           </div>
@@ -73,7 +70,6 @@
       </div>
     </div>
 
-    <!-- Modal de confirmación para borrar -->
     <div v-if="showDeleteConfirm" class="modal">
       <div class="modal-content confirm-dialog">
         <h3>Confirmar eliminación</h3>
@@ -96,15 +92,18 @@ export default {
   name: 'MedicationList',
   setup() {
     const store = useStore()
-    const medications = computed(() => store.state.medications)
+    const medications = computed(() => store.state.medications || [])
+    const masterMedications = computed(() => store.state.masterMedications || [])
     const isEditing = ref(false)
     const showDeleteConfirm = ref(false)
     const selectedMedicationId = ref(null)
+    const isDataReady = ref(false)
     const editForm = reactive({
       id: null,
-      nombre: '',
-      dosis: '',
-      frecuencia: ''
+      medicamento_maestro_id: null,
+      medicamento_maestro_nombre: '',
+      dosis_personalizada: '',
+      frecuencia_personalizada: ''
     })
     const errors = reactive({
       nombre: '',
@@ -112,12 +111,39 @@ export default {
       frecuencia: ''
     })
 
-    onMounted(() => {
-      store.dispatch('fetchMedications')
+    onMounted(async () => {
+      try {
+        if (!medications.value.length) {
+          await store.dispatch('fetchMedications')
+        }
+        if (!masterMedications.value.length) {
+          await store.dispatch('fetchMasterMedications')
+        }
+        isDataReady.value = true
+      } catch (error) {
+        console.error('Error cargando datos:', error)
+      }
     })
 
+    const getMasterMedicationName = (id) => {
+      const medication = masterMedications.value.find(m => m.id === id)
+      return medication ? medication.nombre : 'No encontrado'
+    }
+
     const editMedication = (medication) => {
-      Object.assign(editForm, medication)
+      Object.assign(editForm, {
+        id: medication.id,
+        medicamento_maestro_id: medication.medicamento_maestro_id,
+        dosis_personalizada: medication.dosis_personalizada,
+        frecuencia_personalizada: medication.frecuencia_personalizada
+      })
+      
+      // Obtén el nombre del medicamento maestro y asignalo a la propiedad reactiva
+      const masterMedication = masterMedications.value.find(m => m.id === editForm.medicamento_maestro_id)
+      if (masterMedication) {
+        editForm.medicamento_maestro_nombre = masterMedication.nombre
+      }
+      
       isEditing.value = true
     }
 
@@ -126,12 +152,10 @@ export default {
       Object.keys(errors).forEach(key => errors[key] = '')
 
       // Validate fields
-      const nombreError = validateMedication('nombre', editForm.nombre)
-      const dosisError = validateMedication('dosis', editForm.dosis)
-      const frecuenciaError = validateMedication('frecuencia', editForm.frecuencia)
+      const dosisError = validateMedication('dosis', editForm.dosis_personalizada)
+      const frecuenciaError = validateMedication('frecuencia', editForm.frecuencia_personalizada)
 
-      if (nombreError || dosisError || frecuenciaError) {
-        errors.nombre = nombreError
+      if (dosisError || frecuenciaError) {
         errors.dosis = dosisError
         errors.frecuencia = frecuenciaError
         return
@@ -165,7 +189,10 @@ export default {
     }
 
     return {
+      isDataReady,
       medications,
+      masterMedications,
+      getMasterMedicationName,
       isEditing,
       showDeleteConfirm,
       editForm,

@@ -2,21 +2,18 @@ export const medicationRules = {
   nombre: {
     required: true,
     minLength: 3,
-    // Mejorado para aceptar solo nombres válidos de medicamentos
     pattern: /^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s]{2,}$/,
     message: "El nombre debe empezar con letra y contener solo letras y espacios (mínimo 3 caracteres)"
   },
   dosis: {
     required: true,
-    // Mejorado para asegurar espacio entre número y unidad
     pattern: /^\d+\s*(mg|g|ml)$/i,
     message: "Formato requerido: número seguido de 'mg', 'g' o 'ml' (ej: 500mg, 1g, 10ml)"
   },
   frecuencia: {
     required: true,
-    // Mejorado para unificar formato
-    pattern: /^\d+\s*(horas|h)$/i,
-    message: "Formato requerido: número seguido de 'horas' o 'h' (ej: 8 horas, 8h)"
+    pattern: /^(?:\d+\s*(horas|h|días|d|semanas|s|meses|m)|OD|BID|TID|PRN)$/,
+    message: "Formato requerido: número seguido de 'horas', 'h', 'días', 'd', 'semanas', 's', 'meses', 'm' o abreviaturas como OD, BID, TID, PRN"
   }
 }
 

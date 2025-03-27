@@ -1,6 +1,6 @@
 <template>
   <div class="reports-list">
-    <LoadingSpinner v-if="isLoading" />
+    <LoadingSpinner v-if="!isDataReady" />
     
     <div v-else>
       <h2>Reportes de Efectos Adversos</h2>
@@ -26,7 +26,7 @@
             <tr v-for="effect in adverseEffects" :key="effect.id">
               <!-- Existing columns -->
               <td>{{ effect.patient_name || 'Usuario ' + effect.patient }}</td>
-              <td>{{ effect.medicamento_nombre || 'Med ' + effect.id }}</td>
+              <td>{{ getMedicationName(effect.medication) || 'Med ' + effect.id }}</td>
               <td>
                 <span :class="'severity-badge ' + effect.severity.toLowerCase()">
                   {{ effect.severity }}
@@ -127,6 +127,9 @@ export default {
   },
   setup() {
     const store = useStore()
+    const medications = computed(() => store.state.medications || [])
+    const masterMedications = computed(() => store.state.masterMedications || [])
+    const isDataReady = ref(false)
     
     // Fetch data from Vuex store
     const isLoading = computed(() => store.state.isLoading)
@@ -214,25 +217,47 @@ export default {
       fetchFilteredReports()
     }
 
-    const fetchFilteredReports = () => {
-      store.dispatch('fetchAdverseEffects', currentFilters.value)
+    const fetchFilteredReports = async() => {
+      await store.dispatch('fetchAdverseEffects', currentFilters.value)
     }
+
+    const getMedicationName = (medicationId) => {
+      const medication = medications.value.find(med => med.id === medicationId)
+      if (!medication) return `Medicamento ${medicationId}`
+
+      const medicationMaster = masterMedications.value.find(m => m.id === medication.medicamento_maestro_id)
+      return medicationMaster ? medicationMaster.nombre : `Medicamento ${medicationId}`
+    }
+
 
     const currentFilters = ref({})
 
-    onMounted(() => {
-      fetchFilteredReports()
-      if (canAssignReviewers.value) {
-        store.dispatch('fetchProfessionals')
+    onMounted(async () => {
+      try {
+        await fetchFilteredReports()
+        if (!medications.value.length) {
+          await store.dispatch('fetchMedications')
+        }
+        if (!masterMedications.value.length) {
+          await store.dispatch('fetchMasterMedications')
+        }
+        if (canAssignReviewers.value) {
+          await store.dispatch('fetchProfessionals')
+        }
+        isDataReady.value = true
+      } catch (error) {
+        console.error('Error al cargar datos:', error)
+        isDataReady.value = false
       }
     })
 
     return {
+      isDataReady,
       isLoading,
       adverseEffects,
       selectedReport,
       currentFilters,
-      formatDate, // Asegúrate de incluir esta función aquí
+      formatDate,
       viewReport,
       startReview,
       approveReport,
@@ -241,6 +266,7 @@ export default {
       applyFilters,
       canAssignReviewers,
       professionals,
+      getMedicationName,
       selectedReviewer,
       assignReviewer
     }

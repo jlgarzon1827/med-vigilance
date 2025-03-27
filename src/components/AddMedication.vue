@@ -8,16 +8,19 @@
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
           <div class="input-row">
-            <label for="name">Nombre:</label>
-            <input 
-              type="text" 
-              id="name" 
-              v-model="name" 
-              placeholder="ej: Paracetamol"
-              required
+            <label for="masterMedication">Medicamento Maestro:</label>
+            <select 
+              id="masterMedication" 
+              v-model="selectedMedication"
+              @change="updateFields"
             >
+              <option value="">Seleccione un medicamento</option>
+              <option v-for="medication in medications" :key="medication.id" :value="medication.id">
+                {{ medication.nombre }}
+              </option>
+            </select>
           </div>
-          <span v-if="errors.nombre" class="error-message">{{ errors.nombre }}</span>
+          <span v-if="errors.medicamento_maestro" class="error-message">{{ errors.medicamento_maestro }}</span>
         </div>
         <div class="form-group">
           <div class="input-row">
@@ -27,7 +30,6 @@
               id="dosage" 
               v-model="dosage" 
               placeholder="ej: 500mg"
-              required
             >
           </div>
           <span v-if="errors.dosis" class="error-message">{{ errors.dosis }}</span>
@@ -39,11 +41,11 @@
               type="text" 
               id="frequency" 
               v-model="frequency" 
-              placeholder="ej: 8 horas"
-              required
+              placeholder="ej: 8 horas, OD, BID"
             >
           </div>
           <span v-if="errors.frecuencia" class="error-message">{{ errors.frecuencia }}</span>
+          <p class="legend">OD: Una vez al día, BID: Dos veces al día, TID: Tres veces al día, PRN: Según sea necesario</p>
         </div>
         <div class="modal-buttons">
           <button type="submit" class="btn-edit">Añadir</button>
@@ -58,54 +60,78 @@
 import { ref, reactive } from 'vue'
 import { useStore } from 'vuex'
 import { validateMedication } from '@/utils/validations'
+import axios from 'axios'
 
 export default {
   name: 'AddMedication',
   emits: ['close'],
   setup(props, { emit }) {
     const store = useStore()
-    const name = ref('')
+    const selectedMedication = ref('')
     const dosage = ref('')
     const frequency = ref('')
+    const medications = ref([])
     const errors = reactive({
-      nombre: '',
+      medicamento_maestro: '',
       dosis: '',
       frecuencia: ''
     })
+
+    // Cargar medicamentos maestros
+    axios.get('http://localhost:8000/medicamentos-maestros/')
+      .then(response => {
+        medications.value = response.data
+      })
+      .catch(error => {
+        console.error(error)
+      })
+
+    const updateFields = () => {
+      if (selectedMedication.value) {
+        const selected = medications.value.find(m => m.id === parseInt(selectedMedication.value))
+        dosage.value = selected.dosis
+        frequency.value = selected.frecuencia
+      } else {
+        dosage.value = ''
+        frequency.value = ''
+      }
+    }
 
     const handleSubmit = async () => {
       // Reset errors
       Object.keys(errors).forEach(key => errors[key] = '')
 
       // Validate fields
-      const nombreError = validateMedication('nombre', name.value)
+      const medicamentoMaestroError = selectedMedication.value ? '' : 'Debe seleccionar un medicamento maestro'
       const dosisError = validateMedication('dosis', dosage.value)
       const frecuenciaError = validateMedication('frecuencia', frequency.value)
 
-      if (nombreError || dosisError || frecuenciaError) {
-        errors.nombre = nombreError
+      if (medicamentoMaestroError || dosisError || frecuenciaError) {
+        errors.medicamento_maestro = medicamentoMaestroError
         errors.dosis = dosisError
         errors.frecuencia = frecuenciaError
         return
       }
 
       await store.dispatch('addMedication', {
-        nombre: name.value,
-        dosis: dosage.value,
-        frecuencia: frequency.value
+        medicamento_maestro_id: selectedMedication.value,
+        dosis_personalizada: dosage.value,
+        frecuencia_personalizada: frequency.value
       })
-      name.value = ''
+      selectedMedication.value = ''
       dosage.value = ''
       frequency.value = ''
       emit('close')
     }
 
     return {
-      name,
+      selectedMedication,
       dosage,
       frequency,
+      medications,
       errors,
-      handleSubmit
+      handleSubmit,
+      updateFields
     }
   }
 }
@@ -215,5 +241,12 @@ export default {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+}
+
+.legend {
+  color: #495057;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  margin-left: calc(100px + 1rem);
 }
 </style>

@@ -2,10 +2,10 @@
   <div class="my-adverse-effects">
     <h2>Mis Reportes de Efectos Adversos</h2>
     
-    <LoadingSpinner v-if="isLoading" />
+    <LoadingSpinner v-if="!isDataReady" />
     
     <div v-else>
-      <div v-if="adverseEffects.length" class="reports-list">
+      <div v-if="isDataReady && adverseEffects.length > 0" class="reports-list">
         <div v-for="effect in adverseEffects" :key="effect.id" class="report-card">
           <div class="report-header">
             <h3>{{ getMedicationName(effect.medication) }}</h3>
@@ -100,7 +100,7 @@
         :report="additionalInfoReport"
       />
       
-      <div v-else class="no-reports">
+      <div v-if="adverseEffects.length === 0" class="no-reports">
         <p>No has reportado ningún efecto adverso todavía.</p>
         <button @click="goToReportForm" class="btn-report">Reportar un efecto adverso</button>
       </div>
@@ -135,6 +135,8 @@ export default {
     const isLoading = computed(() => store.state.isLoading)
     const adverseEffects = computed(() => store.state.adverseEffects || [])
     const medications = computed(() => store.state.medications || [])
+    const masterMedications = computed(() => store.state.masterMedications || [])
+    const isDataReady = ref(false)
     
     const formatDate = (dateString) => {
       const date = new Date(dateString)
@@ -143,7 +145,8 @@ export default {
     
     const getMedicationName = (medicationId) => {
       const medication = medications.value.find(med => med.id === medicationId)
-      return medication ? medication.nombre : `Medicamento ${medicationId}`
+      const medicationMaster = masterMedications.value.find(m => m.id === medication.medicamento_maestro_id)
+      return medicationMaster ? medicationMaster.nombre : `Medicamento ${medicationId}`
     }
     
     const goToReportForm = () => {
@@ -167,15 +170,20 @@ export default {
       additionalInfoReport.value = report
     }
     
-    onMounted(() => {
-      store.dispatch('fetchAdverseEffects')
-      if (!medications.value.length) {
-        store.dispatch('fetchMedications')
-      }
+    onMounted(async () => {
+        store.dispatch('fetchAdverseEffects')
+        if (!medications.value.length) {
+          await store.dispatch('fetchMedications')
+        }
+        if (!masterMedications.value.length) {
+          await store.dispatch('fetchMasterMedications')
+        }
+        isDataReady.value = true;
     })
     
     return {
       isLoading,
+      isDataReady,
       adverseEffects,
       formatDate,
       getMedicationName,

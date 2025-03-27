@@ -9,12 +9,14 @@
             id="medication" 
             v-model="formData.medication"
             required
+            v-if="isDataReady"
           >
             <option value="" disabled>Seleccione un medicamento</option>
             <option v-for="med in medications" :key="med.id" :value="med.id">
-              {{ med.nombre }}
+              {{ getMasterMedicationName(med.medicamento_maestro_id) }}
             </option>
           </select>
+          <p v-else>Cargando medicamentos maestros...</p>
           <span v-if="errors.medication" class="error-message">{{ errors.medication }}</span>
         </div>
         
@@ -120,7 +122,7 @@
             <span v-if="errors.frequency" class="error-message">{{ errors.frequency }}</span>
           </div>
         </div>
-        
+
         <div class="form-buttons">
           <button type="submit" class="btn-submit">Enviar Reporte</button>
           <button type="button" @click="resetForm" class="btn-reset">Limpiar</button>
@@ -140,7 +142,7 @@
   </template>
   
   <script>
-  import { ref, reactive, computed, onMounted } from 'vue'
+  import { ref, reactive, computed, onMounted, watch } from 'vue'
   import { useStore } from 'vuex'
   import LoadingSpinner from '@/components/LoadingSpinner.vue'
   
@@ -151,9 +153,11 @@
     },
     setup() {
       const store = useStore()
-      const medications = computed(() => store.state.medications)
+      const medications = computed(() => store.state.medications || [])
+      const masterMedications = computed(() => store.state.masterMedications || [])
       const isLoading = computed(() => store.state.isLoading)
       const successMessage = ref('')
+      const isDataReady = ref(false)
       const userProfile = computed(() => store.state.userProfile);
 
       const formData = reactive({
@@ -165,7 +169,7 @@
         type: '',
         administration_route: '',
         dosage: '',
-        frequency: ''
+        frequency: ''      
       })
       
       const errors = reactive({
@@ -175,9 +179,25 @@
         end_date: '',
         severity: '',
         type: '',
-        administration_route: '',
-        dosage: '',
-        frequency: ''
+      })
+
+      const getMasterMedicationName = (id) => {
+        const medication = masterMedications.value.find(m => m.id === id)
+        return medication ? medication.nombre : 'No encontrado'
+      }
+
+      watch(() => formData.medication, (newValue) => {
+        if (newValue) {
+          const selectedMedication = medications.value.find(m => m.id === newValue)
+          if (selectedMedication) {
+            formData.dosage = selectedMedication.dosis_personalizada
+            formData.frequency = selectedMedication.frecuencia_personalizada
+          }
+          const masterMedication = store.state.masterMedications.value.find(m => m.id === selectedMedication.medicamento_maestro_id)
+          if (masterMedication) {
+            formData.administration_route = masterMedication.via_administracion
+          }
+        }
       })
       
       const validateForm = () => {
@@ -235,7 +255,7 @@
           errors.frequency = 'La frecuencia es requerida'
           isValid = false
         }
-        
+
         return isValid
       }
       
@@ -270,15 +290,21 @@
         successMessage.value = ''
     }
       
-    onMounted(() => {
-        // Cargar medicamentos si no están cargados
-        if (!medications.value.length) {
-          store.dispatch('fetchMedications')
-        }
+    onMounted(async () => {
+      if (!medications.value.length) {
+        await store.dispatch('fetchMedications')
+      }
+      if (!masterMedications.value.length) {
+        await store.dispatch('fetchMasterMedications')
+      }
+      isDataReady.value = true;
     })
       
     return {
+        isDataReady,
         medications,
+        masterMedications,
+        getMasterMedicationName,
         formData,
         errors,
         isLoading,

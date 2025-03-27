@@ -43,6 +43,21 @@ export default createStore({
       state.userProfile = profile
       state.userRole = profile?.profile?.user_type || 'PATIENT'
     },
+    setMasterMedications(state, medications) {
+      state.masterMedications = medications
+    },
+    addMasterMedication(state, medication) {
+      state.masterMedications.push(medication)
+    },
+    updateMasterMedication(state, medication) {
+      const index = state.masterMedications.findIndex(m => m.id === medication.id)
+      if (index !== -1) {
+        state.masterMedications.splice(index, 1, medication)
+      }
+    },
+    removeMasterMedication(state, id) {
+      state.masterMedications = state.masterMedications.filter(m => m.id !== id)
+    },
     updateMedication(state, updatedMedication) {
       const index = state.medications.findIndex(med => med.id === updatedMedication.id)
       if (index !== -1) {
@@ -177,6 +192,54 @@ export default createStore({
         throw error
       }
     },
+    async fetchMasterMedications({ commit }) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.get('http://localhost:8000/medicamentos-maestros/')
+        commit('setMasterMedications', response.data)
+      } catch (error) {
+        console.error('Error fetching master medications:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async addMasterMedication({ commit }, medicationData) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post('http://localhost:8000/medicamentos-maestros/', medicationData)
+        commit('addMasterMedication', response.data)
+      } catch (error) {
+        console.error('Error adding master medication:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async editMasterMedication({ commit }, medication) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.put(`http://localhost:8000/medicamentos-maestros/${medication.id}/`, medication)
+        commit('updateMasterMedication', response.data)
+        return true
+      } catch (error) {
+        console.error('Error updating master medication:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async deleteMasterMedication({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        await axios.delete(`http://localhost:8000/medicamentos-maestros/${id}/`)
+        commit('removeMasterMedication', id)
+        return true
+      } catch (error) {
+        console.error('Error deleting master medication:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },    
     async fetchMedications({ commit }) {
       commit('setLoading', true)
       try {
