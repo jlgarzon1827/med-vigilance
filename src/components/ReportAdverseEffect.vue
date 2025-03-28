@@ -193,7 +193,7 @@
             formData.dosage = selectedMedication.dosis_personalizada
             formData.frequency = selectedMedication.frecuencia_personalizada
           }
-          const masterMedication = store.state.masterMedications.value.find(m => m.id === selectedMedication.medicamento_maestro_id)
+          const masterMedication = masterMedications.value.find(m => m.id === selectedMedication.medicamento_maestro_id)
           if (masterMedication) {
             formData.administration_route = masterMedication.via_administracion
           }

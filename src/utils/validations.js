@@ -7,14 +7,14 @@ export const medicationRules = {
   },
   dosis: {
     required: true,
-    pattern: /^\d+\s*(mg|g|ml)$/i,
-    message: "Formato requerido: número seguido de 'mg', 'g' o 'ml' (ej: 500mg, 1g, 10ml)"
-  },
+    pattern: /^\d+(\.\d+)?\s*(mg|g|ml|mcg|mcg\/dosis)$/i,
+    message: "Formato requerido: número seguido de 'mg', 'g', 'ml', 'mcg' o 'mcg/dosis' (ej: 500mg, 1g, 10ml, 100mcg/dosis)"
+  },  
   frecuencia: {
     required: true,
-    pattern: /^(?:\d+\s*(horas|h|días|d|semanas|s|meses|m)|OD|BID|TID|PRN)$/,
+    pattern: /^(?:\d+\s*(horas|h|días|d|semanas|s|meses|m)|OD|BID|TID|PRN)$/i,
     message: "Formato requerido: número seguido de 'horas', 'h', 'días', 'd', 'semanas', 's', 'meses', 'm' o abreviaturas como OD, BID, TID, PRN"
-  }
+  }  
 }
 
 export const userRules = {

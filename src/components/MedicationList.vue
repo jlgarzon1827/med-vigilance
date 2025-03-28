@@ -34,7 +34,7 @@
         <h2>Editar Medicamento</h2>
         <form @submit.prevent="handleEdit">
           <div class="form-group">
-            <label for="edit-name">Nombre del Medicamento Maestro:</label>
+            <label for="edit-name">Nombre del Medicamento:</label>
             <input 
               type="text" 
               id="edit-name" 

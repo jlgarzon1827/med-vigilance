@@ -8,7 +8,7 @@
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
           <div class="input-row">
-            <label for="masterMedication">Medicamento Maestro:</label>
+            <label for="masterMedication">Medicamento:</label>
             <select 
               id="masterMedication" 
               v-model="selectedMedication"
