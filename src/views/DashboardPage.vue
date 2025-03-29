@@ -185,8 +185,7 @@ export default {
     
     const professionalTabs = [
       { id: 'reports', name: 'Reportes' },
-      { id: 'pending', name: 'Revisiones Pendientes' },
-      { id: 'medications', name: 'Mis Medicamentos' }
+      { id: 'pending', name: 'Revisiones Pendientes' }
     ]
     
     const patientTabs = computed(() => {
@@ -210,15 +209,12 @@ export default {
       if (savedTab) {
         store.commit('setActiveTab', savedTab)
       }
-      // Cargar datos del perfil de usuario si no están cargados
       if (!userProfile.value) {
         store.dispatch('fetchUserProfile')
       }
       else {
         setValidActiveTab();
       }
-      
-      // Cargar datos necesarios para el dashboard
       if (isAdmin.value) {
         store.dispatch('fetchAdverseEffects')
         store.dispatch('fetchDashboardStatistics')
@@ -229,15 +225,11 @@ export default {
         store.dispatch('fetchAdverseEffects')
         store.dispatch('fetchDashboardStatistics')
       }
-      
-      // Cargar medicamentos para todos los usuarios
       store.dispatch('fetchMedications')
     })
     
-    // Vigilar cambios en el perfil para cargar datos cuando sea necesario
     watch(isAdmin, (newValue) => {
       if (newValue) {
-        store.dispatch('fetchAdverseEffects')
         store.dispatch('fetchDashboardStatistics')
       }
       

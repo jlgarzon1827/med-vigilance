@@ -222,6 +222,10 @@ export default {
     }
 
     const getMedicationName = (medicationId) => {
+      if (!medications.value || medications.value.length === 0) {
+        return 'Cargando...';
+      }
+
       const medication = medications.value.find(med => med.id === medicationId)
       if (!medication) return `Medicamento ${medicationId}`
 
@@ -235,9 +239,7 @@ export default {
     onMounted(async () => {
       try {
         await fetchFilteredReports()
-        if (!medications.value.length) {
-          await store.dispatch('fetchMedications')
-        }
+        await store.dispatch('fetchMedications')
         if (!masterMedications.value.length) {
           await store.dispatch('fetchMasterMedications')
         }

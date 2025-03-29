@@ -174,6 +174,42 @@ export default createStore({
         commit('setLoading', false)
       }
     },
+    async fetchInstitutions() {
+      try {
+        const response = await axios.get('http://localhost:8000/institutions/')
+        return response
+      } catch (error) {
+        console.error('Error fetching institutions:', error)
+        throw error
+      }
+    },
+    async createInstitution(_, data) {
+      try {
+        await axios.post('http://localhost:8000/institutions/', data)
+        return true
+      } catch (error) {
+        console.error('Error creating institution:', error)
+        throw error
+      }
+    },
+    async updateInstitution(_, data) {
+      try {
+        await axios.put(`http://localhost:8000/institutions/${data.id}/`, data)
+        return true
+      } catch (error) {
+        console.error('Error updating institution:', error)
+        throw error
+      }
+    },
+    async deleteInstitution(_, id) {
+      try {
+        await axios.delete(`http://localhost:8000/institutions/${id}/`)
+        return true
+      } catch (error) {
+        console.error('Error deleting institution:', error)
+        throw error
+      }
+    },
     async fetchUsers() {
       try {
         const response = await axios.get('http://localhost:8000/users/')

@@ -6,6 +6,12 @@
       <span class="separator"> | </span>
       <router-link to="/dashboard" class="NavBar-link">Dashboard</router-link>
       
+      <!-- Enlaces específicos para administradores -->
+      <template v-if="isAdmin">
+        <span class="separator"> | </span>
+        <router-link to="/admin" class="NavBar-link">Panel de Administración</router-link>
+      </template>
+
       <!-- Enlaces específicos para supervisores -->
       <template v-if="isSupervisor">
         <span class="separator"> | </span>
@@ -63,6 +69,7 @@ export default {
     const isLoggedIn = computed(() => store.getters.isLoggedIn)
     const isProfessional = computed(() => store.getters.isProfessional)
     const isSupervisor = computed(() => store.getters.isSupervisor)
+    const isAdmin = computed(() => store.getters.isAdmin)
     const isPatient = computed(() => store.getters.isPatient)
     const pendingCount = computed(() => {
       return store.state.pendingReviews?.pending || 0
@@ -77,6 +84,7 @@ export default {
       isLoggedIn,
       isProfessional,
       isSupervisor,
+      isAdmin,
       isPatient,
       pendingCount,
       handleLogout

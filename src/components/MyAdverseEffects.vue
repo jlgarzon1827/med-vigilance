@@ -144,14 +144,19 @@ export default {
     }
     
     const getMedicationName = (medicationId) => {
+      if (!medications.value || medications.value.length === 0) {
+        return 'Cargando...';
+      }
       const medication = medications.value.find(med => med.id === medicationId)
+      if (!medication || !medication.medicamento_maestro_id) {
+        return 'No encontrado';
+      }
       const medicationMaster = masterMedications.value.find(m => m.id === medication.medicamento_maestro_id)
       return medicationMaster ? medicationMaster.nombre : `Medicamento ${medicationId}`
     }
     
     const goToReportForm = () => {
-      store.commit('setActiveTab', 'report-adverse');
-      router.replace('/dashboard');
+      router.replace('/dashboard/reports');
     }
     
     const showReclamationModal = ref(false)
@@ -171,14 +176,14 @@ export default {
     }
     
     onMounted(async () => {
-        store.dispatch('fetchAdverseEffects')
-        if (!medications.value.length) {
-          await store.dispatch('fetchMedications')
-        }
-        if (!masterMedications.value.length) {
-          await store.dispatch('fetchMasterMedications')
-        }
-        isDataReady.value = true;
+      if (!medications.value.length) {
+        await store.dispatch('fetchMedications')
+      }
+      if (!masterMedications.value.length) {
+        await store.dispatch('fetchMasterMedications')
+      }
+      await store.dispatch('fetchAdverseEffects')
+      isDataReady.value = true;
     })
     
     return {

@@ -56,7 +56,7 @@
           <label for="reviewer">Revisor:</label>
           <select id="reviewer" v-model="filters.reviewer">
             <option value="">Todos los revisores</option>
-            <option v-for="professional in professionals" :key="professional.id" :value="professional.id">
+            <option v-for="professional in filteredProfessionals" :key="professional.id" :value="professional.id">
               {{ professional.username }}
             </option>
           </select>
@@ -74,13 +74,19 @@
 </template>
 
 <script>
-import { reactive } from 'vue';
+import { computed, reactive } from 'vue';
 import { useStore } from 'vuex';
 
 export default {
   name: 'ReportFiltersSup',
   setup() {
     const store = useStore();
+    const professionals = computed(() => store.state.professionals || []);
+
+    const filteredProfessionals = computed(() => {
+      const supervisorInstitution = store.state.userProfile?.profile?.institution;
+      return professionals.value.filter(professional => professional.profile?.institution === supervisorInstitution);
+    });
 
     const filters = reactive({
       severity: '',
@@ -90,8 +96,6 @@ export default {
       status: '',
       reviewer: ''
     });
-
-    const professionals = store.state.professionals || [];
 
     const applyFilters = () => {
       const nonEmptyFilters = Object.fromEntries(
@@ -108,8 +112,8 @@ export default {
     };
 
     return {
+      filteredProfessionals,
       filters,
-      professionals,
       applyFilters,
       resetFilters
     };

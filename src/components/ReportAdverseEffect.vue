@@ -267,7 +267,8 @@
         // Añadir el ID del paciente a los datos del formulario
         const reportData = { 
             ...formData,
-            patient: userProfile.value?.id // Asumiendo que tienes acceso al perfil del usuario
+            patient: userProfile.value?.id,
+            institution: userProfile.value?.profile?.institution
         };
         
         const success = await store.dispatch('reportAdverseEffect', reportData);
@@ -291,6 +292,7 @@
     }
       
     onMounted(async () => {
+      await store.dispatch('fetchUserProfile')
       if (!medications.value.length) {
         await store.dispatch('fetchMedications')
       }

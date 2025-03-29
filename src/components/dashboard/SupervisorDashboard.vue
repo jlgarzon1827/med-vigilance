@@ -62,9 +62,9 @@
                 </select>
 
                 <!-- Dropdown para asignar revisor -->
-                <select v-if="professionals.length" @change="assignReviewer(report, $event)">
+                <select v-if="filteredProfessionals.length" @change="assignReviewer(report, $event)">
                   <option value="">Asignar Revisor</option>
-                  <option v-for="professional in professionals" :key="professional.id" :value="professional.id">{{ professional.username }}</option>
+                  <option v-for="professional in filteredProfessionals" :key="professional.id" :value="professional.id">{{ professional.username }}</option>
                 </select>
 
                 <!-- Mensaje si no hay profesionales disponibles -->
@@ -120,6 +120,11 @@ export default {
     const showDetailModal = ref(false);
     const selectedReportId = ref(null);
     const selectedReport = ref(null);
+
+    const filteredProfessionals = computed(() => {
+      const supervisorInstitution = store.state.userProfile?.profile?.institution;
+      return professionals.value.filter(professional => professional.profile?.institution === supervisorInstitution);
+    });
 
     const filteredReports = computed(() => {
       if (!filters.value.status) return reports.value;
@@ -201,6 +206,7 @@ export default {
       assignReviewer,
       changeStatus,
       professionals,
+      filteredProfessionals,
       showRevertModal,
       showReclamationModal,
       showDetailModal,

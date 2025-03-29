@@ -40,8 +40,7 @@
               </td>
               <td>{{ formatDate(report.reported_at) }}</td>
               <td>
-                <button @click="viewReport(report)" class="btn-view">Ver</button>
-                <button @click="markAsReviewed(report.id)" class="btn-review">Revisar</button>
+                <button @click="goToReports" class="btn-view">Ir a Reportes</button>
               </td>
             </tr>
           </tbody>
@@ -59,37 +58,30 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
-import ReportDetail from '@/components/dashboard/ReportDetail.vue'
 
 export default {
   name: 'PendingReviews',
   components: {
-    LoadingSpinner,
-    ReportDetail
+    LoadingSpinner
   },
   setup() {
     const store = useStore()
+    const router = useRouter()
     const isLoading = computed(() => store.state.isLoading)
     const pendingReviews = computed(() => store.state.pendingReviews || {})
-    const selectedReport = ref(null)
     
     const formatDate = (dateString) => {
       const date = new Date(dateString)
       return date.toLocaleDateString()
     }
     
-    const viewReport = (report) => {
-      selectedReport.value = report
-    }
-    
-    const markAsReviewed = async (id) => {
-      const success = await store.dispatch('markAsReviewed', id)
-      if (success) {
-        store.dispatch('fetchPendingReviews')
-      }
+    const goToReports = () => {
+      store.commit('setActiveTab', 'reports');
+      router.replace('/dashboard');
     }
     
     onMounted(() => {
@@ -101,10 +93,8 @@ export default {
     return {
       isLoading,
       pendingReviews,
-      selectedReport,
       formatDate,
-      viewReport,
-      markAsReviewed
+      goToReports
     }
   }
 }

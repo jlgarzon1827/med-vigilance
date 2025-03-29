@@ -34,12 +34,18 @@
           </div>
           <div class="form-group">
             <label>Institución:</label>
-            <span class="profile-data">{{ userProfile?.profile?.institution }}</span>
+            <!-- Mostrar el nombre de la institución -->
+            <span class="profile-data">{{ institutionName }}</span>
           </div>
         </template>
 
         <!-- Información específica para administradores -->
         <template v-if="isAdmin || isSupervisor">
+          <div class="form-group">
+            <label>Institución:</label>
+            <!-- Mostrar el nombre de la institución -->
+            <span class="profile-data">{{ institutionName }}</span>
+          </div>
           <h3>Información de Gestión</h3>
           <p>{{ isAdmin ? 'Tienes acceso al panel de administración.' : 'Tienes acceso a supervisión de reportes.' }}</p>
         </template>
@@ -50,14 +56,16 @@
 </template>
 
 <script>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
+import axios from 'axios'
 
 export default {
   name: 'ProfilePage',
   setup() {
     const store = useStore()
     const userProfile = computed(() => store.state.userProfile)
+    const institutionName = ref('No asignada') // Propiedad reactiva para almacenar el nombre de la institución
 
     const isAdmin = computed(() => {
       return userProfile.value?.profile?.user_type === 'ADMIN'
@@ -85,12 +93,32 @@ export default {
       return 'patient'
     })
 
-    onMounted(() => {
-      store.dispatch('fetchUserProfile')
+    // Obtener el nombre de la institución a partir del ID
+    const fetchInstitutionName = async (institutionId) => {
+      if (!institutionId) return
+
+      try {
+        const response = await axios.get(`http://localhost:8000/institutions/${institutionId}/`)
+        institutionName.value = response.data.name
+      } catch (error) {
+        console.error('Error al obtener el nombre de la institución:', error)
+        institutionName.value = 'No disponible'
+      }
+    }
+
+    onMounted(async () => {
+      await store.dispatch('fetchUserProfile')
+      
+      // Obtener el ID de la institución y buscar su nombre
+      const institutionId = userProfile.value?.profile?.institution
+      if (institutionId) {
+        fetchInstitutionName(institutionId)
+      }
     })
 
     return {
       userProfile,
+      institutionName,
       isAdmin,
       isSupervisor,
       isProfessional,

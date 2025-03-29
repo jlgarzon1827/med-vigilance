@@ -6,38 +6,38 @@
       <h2>Estadísticas por Medicamento</h2>
       
       <div class="chart-container">
-        <h3>Medicamentos más reportados</h3>
-        <BarChart 
-          v-if="medicationStats.most_reported && medicationStats.most_reported.length" 
-          :chart-data="mostReportedChartData" 
-        />
-        <p v-else class="no-data">No hay datos disponibles</p>
-      </div>
-      
-      <div class="table-container">
-        <h3>Distribución por severidad y medicamento</h3>
-        <table v-if="medicationStats.by_severity && medicationStats.by_severity.length">
-          <thead>
-            <tr>
-              <th>Medicamento</th>
-              <th>Severidad</th>
-              <th>Cantidad</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(item, index) in medicationStats.by_severity" :key="index">
-              <td>{{ item.medication__nombre }}</td>
-              <td>
-                <span :class="'severity-badge ' + item.severity.toLowerCase()">
-                  {{ item.severity }}
-                </span>
-              </td>
-              <td>{{ item.count }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else class="no-data">No hay datos disponibles</p>
-      </div>
+      <h3>Medicamentos más reportados</h3>
+      <BarChart 
+        v-if="medicationStats.most_reported && medicationStats.most_reported.length" 
+        :chart-data="mostReportedChartData" 
+      />
+      <p v-else class="no-data">No hay datos disponibles</p>
+    </div>
+
+    <div class="table-container">
+      <h3>Distribución por severidad y medicamento</h3>
+      <table v-if="medicationStats.by_severity && medicationStats.by_severity.length">
+        <thead>
+          <tr>
+            <th>Medicamento</th>
+            <th>Severidad</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, index) in medicationStats.by_severity" :key="index">
+            <td>{{ item.medication__medicamento_maestro__nombre }}</td> <!-- Cambia a medicamento_maestro__nombre -->
+            <td>
+              <span :class="'severity-badge ' + item.severity.toLowerCase()">
+                {{ item.severity }}
+              </span>
+            </td>
+            <td>{{ item.count }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else class="no-data">No hay datos disponibles</p>
+    </div>
     </div>
   </div>
 </template>
@@ -63,7 +63,7 @@ export default {
       if (!medicationStats.value.most_reported) return null
       
       return {
-        labels: medicationStats.value.most_reported.map(item => item.medication__nombre),
+        labels: medicationStats.value.most_reported.map(item => item.medication__medicamento_maestro__nombre), // Cambia a medicamento_maestro__nombre
         datasets: [{
           label: 'Número de reportes',
           data: medicationStats.value.most_reported.map(item => item.count),
@@ -71,12 +71,17 @@ export default {
         }]
       }
     })
-    
-    onMounted(() => {
+
+    onMounted(async () => {
       if (!medicationStats.value.most_reported) {
-        store.dispatch('fetchMedicationStatistics')
+        try {
+          await store.dispatch('fetchMedicationStatistics')
+        } catch (error) {
+          console.error('Error al cargar estadísticas:', error)
+        }
       }
     })
+
     
     return {
       isLoading,

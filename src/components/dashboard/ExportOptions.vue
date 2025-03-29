@@ -80,7 +80,7 @@
       </div>
     </div>
     
-    <div v-if="isLoading" class="loading-overlay">
+    <div v-if="isExporting" class="loading-overlay">
       <LoadingSpinner />
       <p>Preparando exportación...</p>
     </div>
@@ -88,7 +88,7 @@
 </template>
 
 <script>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useStore } from 'vuex'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
@@ -108,16 +108,25 @@ export default {
       status: ''
     })
     
+    const isExporting = ref(false)
+
     const exportData = async (format) => {
-      const validFilters = {}
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) validFilters[key] = value
-      })
-      
-      await store.dispatch('exportData', {
-        format,
-        filters: validFilters
-      })
+      isExporting.value = true
+      try {
+        const validFilters = {}
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) validFilters[key] = value
+        })
+        
+        await store.dispatch('exportData', {
+          format,
+          filters: validFilters
+        })
+      } catch (error) {
+        console.error('Error al exportar datos:', error)
+      } finally {
+        isExporting.value = false
+      }
     }
     
     const resetFilters = () => {
@@ -128,7 +137,7 @@ export default {
     
     return {
       filters,
-      isLoading: store.state.isLoading,
+      isExporting,
       exportData,
       resetFilters
     }
