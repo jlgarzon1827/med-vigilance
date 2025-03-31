@@ -194,7 +194,7 @@ export default createStore({
     },
     async updateInstitution(_, data) {
       try {
-        await axios.put(`http://localhost:8000/institutions/${data.id}/`, data)
+        await axios.put(`/institutions/${data.id}/`, data)
         return true
       } catch (error) {
         console.error('Error updating institution:', error)
@@ -203,7 +203,7 @@ export default createStore({
     },
     async deleteInstitution(_, id) {
       try {
-        await axios.delete(`http://localhost:8000/institutions/${id}/`)
+        await axios.delete(`/institutions/${id}/`)
         return true
       } catch (error) {
         console.error('Error deleting institution:', error)
@@ -221,7 +221,7 @@ export default createStore({
     },
     async updateUserRole(_, data) {
       try {
-        await axios.post(`http://localhost:8000/users/${data.userId}/set_role/`, { role: data.newRole })
+        await axios.post(`/users/${data.userId}/set_role/`, { role: data.newRole })
         return true
       } catch (error) {
         console.error('Error updating user role:', error)
@@ -253,7 +253,7 @@ export default createStore({
     async editMasterMedication({ commit }, medication) {
       commit('setLoading', true)
       try {
-        const response = await axios.put(`http://localhost:8000/medicamentos-maestros/${medication.id}/`, medication)
+        const response = await axios.put(`/medicamentos-maestros/${medication.id}/`, medication)
         commit('updateMasterMedication', response.data)
         return true
       } catch (error) {
@@ -266,7 +266,7 @@ export default createStore({
     async deleteMasterMedication({ commit }, id) {
       commit('setLoading', true)
       try {
-        await axios.delete(`http://localhost:8000/medicamentos-maestros/${id}/`)
+        await axios.delete(`/medicamentos-maestros/${id}/`)
         commit('removeMasterMedication', id)
         return true
       } catch (error) {
@@ -301,7 +301,7 @@ export default createStore({
     async editMedication({ commit }, medication) {
       commit('setLoading', true)
       try {
-        const response = await axios.put(`http://localhost:8000/medicamentos/${medication.id}/`, medication)
+        const response = await axios.put(`/medicamentos/${medication.id}/`, medication)
         commit('updateMedication', response.data)
         return true
       } catch (error) {
@@ -314,7 +314,7 @@ export default createStore({
     async deleteMedication({ commit }, id) {
       commit('setLoading', true)
       try {
-        await axios.delete(`http://localhost:8000/medicamentos/${id}/`)
+        await axios.delete(`/medicamentos/${id}/`)
         commit('removeMedication', id)
         return true
       } catch (error) {
@@ -327,7 +327,7 @@ export default createStore({
     async fetchAdverseEffects({ commit }, filters = {}) {
       commit('setLoading', true);
       try {
-        let url = `http://localhost:8000/adverse-effects/`
+        let url = `/adverse-effects/`
         if (Object.keys(filters).length > 0) {
           const queryParams = new URLSearchParams(filters).toString()
           url = `${url}filtered_reports/?${queryParams}`
@@ -349,7 +349,7 @@ export default createStore({
     async fetchReportDetails({ commit }, id) {
       commit('setLoading', true);
       try {
-        const response = await axios.get(`http://localhost:8000/adverse-effects/${id}/`);
+        const response = await axios.get(`/adverse-effects/${id}/`);
         commit('setSelectedReport', response.data);
         return true;
       } catch (error) {
@@ -375,7 +375,7 @@ export default createStore({
     },
     async updateReportStatus({ commit }, { reportId, status }) {
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/update-status/`, { status });
+        const response = await axios.post(`/adverse-effects/${reportId}/update-status/`, { status });
         commit('updateAdverseEffect', response.data);
         alert(`Estado del reporte actualizado a ${status}.`);
       } catch (error) {
@@ -385,7 +385,7 @@ export default createStore({
     async revertReportStatus({ commit }, { reportId, reason }) {
       commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/revert_status/`, { reason })
+        const response = await axios.post(`/adverse-effects/${reportId}/revert_status/`, { reason })
         commit('updateAdverseEffect', response.data)
         return true
       } catch (error) {
@@ -431,7 +431,7 @@ export default createStore({
     async fetchTrends({ commit }, days = 30) {
       commit('setLoading', true)
       try {
-        const response = await axios.get(`http://localhost:8000/dashboard/trends/?days=${days}`)
+        const response = await axios.get(`/dashboard/trends/?days=${days}`)
         commit('setTrends', response.data)
       } catch (error) {
         console.error('Error fetching trends:', error)
@@ -453,7 +453,7 @@ export default createStore({
     async approveReclamation({ commit }, id) {
       commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/approve_reclamation/`)
+        const response = await axios.post(`/adverse-effects/${id}/approve_reclamation/`)
         commit('updateAdverseEffect', response.data)
         return true
       } catch (error) {
@@ -466,7 +466,7 @@ export default createStore({
     async rejectReclamation({ commit }, id) {
       commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/reject_reclamation/`)
+        const response = await axios.post(`/adverse-effects/${id}/reject_reclamation/`)
         commit('updateAdverseEffect', response.data)
         return true
       } catch (error) {
@@ -479,7 +479,7 @@ export default createStore({
     async startReview({ commit }, id) {
       commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/start_review/`)
+        const response = await axios.post(`/adverse-effects/${id}/start_review/`)
         commit('updateAdverseEffect', response.data)
         return true
       } catch (error) {
@@ -492,7 +492,7 @@ export default createStore({
     async requestInfo({ commit }, id) {
       commit('setLoading', true);
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/request_additional_info/`);
+        const response = await axios.post(`/adverse-effects/${id}/request_additional_info/`);
         commit('updateAdverseEffect', response.data);
         alert('Información adicional solicitada correctamente.');
         return true;
@@ -507,7 +507,7 @@ export default createStore({
     async approveReport({ commit }, id) {
       commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/approve_report/`)
+        const response = await axios.post(`/adverse-effects/${id}/approve_report/`)
         commit('updateAdverseEffect', response.data)
         return true
       } catch (error) {
@@ -520,7 +520,7 @@ export default createStore({
     async rejectReport({ commit }, id) {
       commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/reject_report/`)
+        const response = await axios.post(`/adverse-effects/${id}/reject_report/`)
         commit('updateAdverseEffect', response.data)
         return true
       } catch (error) {
@@ -533,7 +533,7 @@ export default createStore({
     async startReclamation({ commit }, { id, reason }) {
       commit('setLoading', true);
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/start_reclamation/`, {
+        const response = await axios.post(`/adverse-effects/${id}/start_reclamation/`, {
           reclamation_reason: reason,
         });
         commit('updateAdverseEffect', response.data);
@@ -550,7 +550,7 @@ export default createStore({
     async provideAdditionalInfo({ commit }, { id, info }) {
       commit('setLoading', true);
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/provide_additional_info/`, {
+        const response = await axios.post(`/adverse-effects/${id}/provide_additional_info/`, {
           additional_info: info,
         });
         commit('updateAdverseEffect', response.data);
@@ -574,7 +574,7 @@ export default createStore({
     },
     async assignReviewer(_, { reportId, reviewerId }) {
       try {
-        await axios.post(`http://localhost:8000/adverse-effects/${reportId}/assign-reviewer/`, { reviewer_id: reviewerId });
+        await axios.post(`/adverse-effects/${reportId}/assign-reviewer/`, { reviewer_id: reviewerId });
         alert('Revisor asignado correctamente.');
         await this.dispatch('fetchSupervisorView');
       } catch (error) {
@@ -584,7 +584,7 @@ export default createStore({
     async exportData({ commit }, { format, filters }) {
       commit('setLoading', true)
       try {
-        let url = `http://localhost:8000/dashboard/export_${format}/`
+        let url = `/dashboard/export_${format}/`
         if (filters) {
           const queryParams = new URLSearchParams(filters).toString()
           url = `${url}?${queryParams}`
@@ -638,7 +638,7 @@ export default createStore({
       commit('setLoading', true)
       try {
         const queryParams = new URLSearchParams(filters).toString()
-        const response = await axios.get(`http://localhost:8000/dashboard/generate_pdf_report/?${queryParams}`, {
+        const response = await axios.get(`/dashboard/generate_pdf_report/?${queryParams}`, {
           responseType: 'blob'
         })
         

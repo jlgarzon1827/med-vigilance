@@ -98,7 +98,7 @@ export default {
       if (!institutionId) return
 
       try {
-        const response = await axios.get(`http://localhost:8000/institutions/${institutionId}/`)
+        const response = await axios.get(`/institutions/${institutionId}/`)
         institutionName.value = response.data.name
       } catch (error) {
         console.error('Error al obtener el nombre de la institución:', error)
