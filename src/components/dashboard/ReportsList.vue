@@ -1,6 +1,6 @@
 <template>
   <div class="reports-list">
-    <LoadingSpinner v-if="isLoading" />
+    <LoadingSpinner v-if="!isDataReady" />
     
     <div v-else>
       <h2>Reportes de Efectos Adversos</h2>
@@ -18,8 +18,6 @@
               <th>Fecha</th>
               <th>Estado</th>
               <th>Acciones</th>
-              <!-- Conditionally show Reviewer column -->
-              <th v-if="canAssignReviewers">Asignar Revisor</th>
             </tr>
           </thead>
 
@@ -28,7 +26,7 @@
             <tr v-for="effect in adverseEffects" :key="effect.id">
               <!-- Existing columns -->
               <td>{{ effect.patient_name || 'Usuario ' + effect.patient }}</td>
-              <td>{{ effect.medicamento_nombre || 'Med ' + effect.id }}</td>
+              <td>{{ getMedicationName(effect.medication) || 'Med ' + effect.id }}</td>
               <td>
                 <span :class="'severity-badge ' + effect.severity.toLowerCase()">
                   {{ effect.severity }}
@@ -38,31 +36,60 @@
               <td>{{ formatDate(effect.reported_at) }}</td>
               <td>
                 <span :class="'status-badge ' + effect.status.toLowerCase()">
-                  {{ effect.status }}
+                  {{ 
+                    effect.status === 'CREATED' ? 'Creado' : 
+                    effect.status === 'ASSIGNED' ? 'Asignado' : 
+                    effect.status === 'IN_REVISION' ? 'En Revisión' : 
+                    effect.status === 'PENDING_INFORMATION' ? 'Pendiente de Información Adicional' : 
+                    effect.status === 'REJECTED' ? 'Rechazado' : 
+                    effect.status === 'RECLAIMED' ? 'Reclamado' : 
+                    effect.status === 'APPROVED' ? 'Aprobado' : 
+                    'Estado desconocido'
+                  }}
                 </span>
               </td>
+
+              <!-- Acciones -->
               <td>
-                <button @click="viewReport(effect)" class="btn-view">Ver</button>
+                <!-- Botón para iniciar revisión -->
                 <button 
-                  v-if="effect.status === 'PENDING'" 
-                  @click="markAsReviewed(effect)" 
-                  class="btn-review"
+                  v-if="effect.status === 'ASSIGNED'" 
+                  @click="startReview(effect)" 
+                  class="btn btn-primary"
                 >
-                  Revisar
+                  Iniciar Revisión
                 </button>
-              </td>
 
-              <!-- Assign Reviewer Dropdown -->
-              <!-- Visible only if user has the canAssignReviewers permission -->
-              <td v-if="canAssignReviewers">
-                <select v-model="selectedReviewer[effect.id]" @change="assignReviewer(effect.id)">
-                  <!-- List of professionals -->
-                  <option v-for="user in professionals" :value="user.id" :key="user.id">
-                    {{ user.username }}
-                  </option>
-                </select>
-              </td>
+                <!-- Botón para aprobar reporte -->
+                <button 
+                  v-if="effect.status === 'IN_REVISION'" 
+                  @click="approveReport(effect)" 
+                  class="btn btn-success"
+                >
+                  Aprobar
+                </button>
 
+                <!-- Botón para rechazar reporte -->
+                <button 
+                  v-if="effect.status === 'IN_REVISION'" 
+                  @click="rejectReport(effect)" 
+                  class="btn btn-danger"
+                >
+                  Rechazar
+                </button>
+
+                <!-- Botón para solicitar información adicional -->
+                <button 
+                  v-if="effect.status === 'IN_REVISION'" 
+                  @click="requestInfo(effect)" 
+                  class="btn btn-warning"
+                >
+                  Solicitar Información
+                </button>
+
+                <!-- Botón para ver detalles -->
+                <button @click="viewReport(effect)" class="btn btn-info">Ver</button>
+              </td>
             </tr>
           </tbody>
 
@@ -85,7 +112,6 @@
 </template>
 
 <script>
-// Import necessary components and Vuex
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -101,6 +127,9 @@ export default {
   },
   setup() {
     const store = useStore()
+    const medications = computed(() => store.state.medications || [])
+    const masterMedications = computed(() => store.state.masterMedications || [])
+    const isDataReady = ref(false)
     
     // Fetch data from Vuex store
     const isLoading = computed(() => store.state.isLoading)
@@ -114,6 +143,9 @@ export default {
     // Fetch list of professionals
     const professionals = computed(() => store.state.professionals || [])
     
+    // Selected report for modal
+    const selectedReport = ref(null)
+
     // Selected reviewer for each report
     const selectedReviewer = ref({})
 
@@ -122,69 +154,121 @@ export default {
       try {
         await store.dispatch('assignReviewer', { reportId, reviewerId: selectedReviewer.value[reportId] })
         alert('Revisor asignado correctamente.')
-        // Optionally refresh data
         fetchFilteredReports()
       } catch (error) {
         console.error('Error assigning reviewer:', error)
       }
     }
 
-    const formatDate = (dateString) => {
-      const date = new Date(dateString)
-      return date.toLocaleDateString()
+    // Actions for changing report states
+    const startReview = async (effect) => {
+      try {
+        await store.dispatch('startReview', effect.id)
+        alert('Revisión iniciada correctamente.')
+        fetchFilteredReports()
+      } catch (error) {
+        console.error('Error iniciando revisión:', error)
+      }
     }
-    
+
+    const approveReport = async (effect) => {
+      try {
+        await store.dispatch('approveReport', effect.id)
+        alert('Reporte aprobado correctamente.')
+        fetchFilteredReports()
+      } catch (error) {
+        console.error('Error aprobando reporte:', error)
+      }
+    }
+
+    const rejectReport = async (effect) => {
+      try {
+        await store.dispatch('rejectReport', effect.id)
+        alert('Reporte rechazado correctamente.')
+        fetchFilteredReports()
+      } catch (error) {
+        console.error('Error rechazando reporte:', error)
+      }
+    }
+
+    const requestInfo = async (effect) => {
+      try {
+        await store.dispatch('requestInfo', effect.id)
+        alert('Información adicional solicitada correctamente.')
+        fetchFilteredReports()
+      } catch (error) {
+        console.error('Error solicitando información:', error)
+      }
+    }
+
+    // Format date utility function
+    const formatDate = (dateString) => {
+      if (!dateString) return 'Fecha no disponible'
+      const date = new Date(dateString)
+      return date.toLocaleDateString() // Formatea la fecha según la configuración regional del navegador
+    }
+
     const viewReport = (report) => {
       selectedReport.value = report
     }
-    
-    const markAsReviewed = async (effect) => {
-      const success = await store.dispatch('markAsReviewed', effect.id)
-      if (success) {
-        // Update the status locally
-        effect.status = 'REVIEWED'
-      }
-    }
-    
+
     const applyFilters = (filters) => {
       currentFilters.value = filters
       fetchFilteredReports()
     }
-    
-    const fetchFilteredReports = () => {
-      // Filtrar solo las propiedades que no están vacías
-      const nonEmptyFilters = Object.fromEntries(
-        Object.entries(currentFilters.value).filter(([, value]) => value !== '')
-      )
-      store.dispatch('fetchAdverseEffects', nonEmptyFilters)
+
+    const fetchFilteredReports = async() => {
+      await store.dispatch('fetchAdverseEffects', currentFilters.value)
     }
 
-    // Initialize filters and selected report
-    const currentFilters = ref({})
-    const selectedReport = ref(null)
+    const getMedicationName = (medicationId) => {
+      if (!medications.value || medications.value.length === 0) {
+        return 'Cargando...';
+      }
 
-    onMounted(() => {
-      if (!adverseEffects.value.length) {
-        fetchFilteredReports()
+      const medication = medications.value.find(med => med.id === medicationId)
+      if (!medication) return `Medicamento ${medicationId}`
+
+      const medicationMaster = masterMedications.value.find(m => m.id === medication.medicamento_maestro_id)
+      return medicationMaster ? medicationMaster.nombre : `Medicamento ${medicationId}`
+    }
+
+
+    const currentFilters = ref({})
+
+    onMounted(async () => {
+      try {
+        await fetchFilteredReports()
+        await store.dispatch('fetchMedications')
+        if (!masterMedications.value.length) {
+          await store.dispatch('fetchMasterMedications')
+        }
+        if (canAssignReviewers.value) {
+          await store.dispatch('fetchProfessionals')
+        }
+        isDataReady.value = true
+      } catch (error) {
+        console.error('Error al cargar datos:', error)
+        isDataReady.value = false
       }
-      if (canAssignReviewers.value) {
-        store.dispatch('fetchProfessionals')
-      }
-      
-      fetchFilteredReports()
     })
-    
+
     return {
+      isDataReady,
       isLoading,
       adverseEffects,
       selectedReport,
       currentFilters,
       formatDate,
       viewReport,
-      markAsReviewed,
+      startReview,
+      approveReport,
+      rejectReport,
+      requestInfo,
       applyFilters,
       canAssignReviewers,
       professionals,
+      getMedicationName,
       selectedReviewer,
       assignReviewer
     }
@@ -227,68 +311,101 @@ th {
 }
 
 .severity-badge.leve {
-  background-color: #d1e7dd;
-  color: #0f5132;
+  background-color: #d1e7dd; /* Verde claro */
+  color: #0f5132; /* Verde oscuro */
 }
 
 .severity-badge.moderada {
-  background-color: #fff3cd;
-  color: #664d03;
+  background-color: #fff3cd; /* Amarillo claro */
+  color: #664d03; /* Amarillo oscuro */
 }
 
 .severity-badge.grave {
-  background-color: #f8d7da;
-  color: #842029;
+  background-color: #f8d7da; /* Rojo claro */
+  color: #842029; /* Rojo oscuro */
 }
 
 .severity-badge.mortal {
-  background-color: #842029;
-  color: #fff;
+  background-color: #842029; /* Rojo oscuro */
+  color: #fff; /* Blanco */
 }
 
-.status-badge.pending {
-  background-color: #fff3cd;
-  color: #664d03;
+.status-badge.creado {
+  background-color: #d1e7dd; /* Verde claro */
+  color: #0f5132; /* Verde oscuro */
 }
 
-.status-badge.reviewed {
-  background-color: #d1e7dd;
-  color: #0f5132;
+.status-badge.asignado {
+  background-color: #fff3cd; /* Amarillo claro */
+  color: #664d03; /* Amarillo oscuro */
 }
 
-.btn-view, .btn-review {
-  padding: 0.25rem 0.5rem;
-  margin-right: 0.5rem;
-  border: none;
+.status-badge.en_revision {
+  background-color: #f8d7da; /* Rojo claro */
+  color: #842029; /* Rojo oscuro */
+}
+
+.status-badge.pendiente_info {
+  background-color: #fff3cd; /* Amarillo claro */
+  color: #664d03; /* Amarillo oscuro */
+}
+
+.status-badge.rechazado {
+  background-color: #f8d7da; /* Rojo claro */
+  color: #842029; /* Rojo oscuro */
+}
+
+.status-badge.reclamado {
+  background-color: #d1e7dd; /* Verde claro */
+  color: #0f5132; /* Verde oscuro */
+}
+
+.status-badge.aprobado {
+  background-color: #d1e7dd; /* Verde claro */
+  color: #0f5132; /* Verde oscuro */
+}
+
+button {
+  padding: 0.5rem;
   border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
+  font-size: inherit;
 }
 
+/* Botón para iniciar revisión */
+.btn-review {
+  background-color: #d1e7dd; /* Verde claro */
+}
+
+/* Botón para aprobar reporte */
+.btn-approve {
+  background-color: #28a745; /* Verde más intenso */
+}
+
+/* Botón para rechazar reporte */
+.btn-reject {
+  background-color: #dc3545; /* Rojo intenso */
+}
+
+/* Botón para solicitar información adicional */
+.btn-request-info {
+  background-color: #ffc107; /* Amarillo intenso */
+}
+
+/* Botón para ver detalles */
 .btn-view {
-  background-color: #e4fdff;
+  background-color: #e4fdff; /* Azul muy claro */
   color: #000;
 }
 
-.btn-review {
-  background-color: #d1e7dd;
-  color: #0f5132;
+/* Hover effects para botones generales */
+button:hover {
+  opacity: .9;
 }
 
-.btn-view:hover {
-  background-color: #7da9bd;
-}
-
-.btn-review:hover {
-  background-color: #0f5132;
-  color: #fff;
-}
-
+/* Sin datos disponibles en la tabla */
 .no-data {
   text-align: center;
   padding: 2rem;
-  color: #6c757d;
-  font-style: italic;
 }
 </style>
 

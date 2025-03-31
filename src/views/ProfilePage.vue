@@ -20,7 +20,7 @@
             </span>
           </span>
         </div>
-        
+
         <!-- Información específica para profesionales -->
         <template v-if="isProfessional">
           <h3>Información Profesional</h3>
@@ -34,42 +34,93 @@
           </div>
           <div class="form-group">
             <label>Institución:</label>
-            <span class="profile-data">{{ userProfile?.profile?.institution }}</span>
+            <!-- Mostrar el nombre de la institución -->
+            <span class="profile-data">{{ institutionName }}</span>
           </div>
         </template>
+
+        <!-- Información específica para administradores -->
+        <template v-if="isAdmin || isSupervisor">
+          <div class="form-group">
+            <label>Institución:</label>
+            <!-- Mostrar el nombre de la institución -->
+            <span class="profile-data">{{ institutionName }}</span>
+          </div>
+          <h3>Información de Gestión</h3>
+          <p>{{ isAdmin ? 'Tienes acceso al panel de administración.' : 'Tienes acceso a supervisión de reportes.' }}</p>
+        </template>
+
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
+import axios from '@/utils/axios'
 
 export default {
   name: 'ProfilePage',
   setup() {
     const store = useStore()
     const userProfile = computed(() => store.state.userProfile)
-    
+    const institutionName = ref('No asignada') // Propiedad reactiva para almacenar el nombre de la institución
+
+    const isAdmin = computed(() => {
+      return userProfile.value?.profile?.user_type === 'ADMIN'
+    })
+
+    const isSupervisor = computed(() => {
+      return userProfile.value?.profile?.user_type === 'SUPERVISOR'
+    })
+
     const isProfessional = computed(() => {
       return userProfile.value?.profile?.user_type === 'PROFESSIONAL'
     })
-    
+
     const userRoleDisplay = computed(() => {
-      return isProfessional.value ? 'Profesional de la salud' : 'Paciente'
-    })
-    
-    const userRoleClass = computed(() => {
-      return isProfessional.value ? 'professional' : 'patient'
+      if (isAdmin.value) return 'Administrador del sistema'
+      if (isSupervisor.value) return 'Supervisor'
+      if (isProfessional.value) return 'Profesional de la salud'
+      return 'Paciente'
     })
 
-    onMounted(() => {
-      store.dispatch('fetchUserProfile')
+    const userRoleClass = computed(() => {
+      if (isAdmin.value) return 'admin'
+      if (isSupervisor.value) return 'supervisor'
+      if (isProfessional.value) return 'professional'
+      return 'patient'
+    })
+
+    // Obtener el nombre de la institución a partir del ID
+    const fetchInstitutionName = async (institutionId) => {
+      if (!institutionId) return
+
+      try {
+        const response = await axios.get(`http://localhost:8000/institutions/${institutionId}/`)
+        institutionName.value = response.data.name
+      } catch (error) {
+        console.error('Error al obtener el nombre de la institución:', error)
+        institutionName.value = 'No disponible'
+      }
+    }
+
+    onMounted(async () => {
+      await store.dispatch('fetchUserProfile')
+      
+      // Obtener el ID de la institución y buscar su nombre
+      const institutionId = userProfile.value?.profile?.institution
+      if (institutionId) {
+        fetchInstitutionName(institutionId)
+      }
     })
 
     return {
       userProfile,
+      institutionName,
+      isAdmin,
+      isSupervisor,
       isProfessional,
       userRoleDisplay,
       userRoleClass
@@ -113,22 +164,22 @@ export default {
   flex: 1;
   padding: 0.5rem;
   color: #2c3e50;
-  font-size: 1rem;
-}
-
-h3 {
-  margin-top: 2rem;
-  margin-bottom: 1.5rem;
-  color: #2c3e50;
-  border-bottom: 1px solid #e9ecef;
-  padding-bottom: 0.5rem;
 }
 
 .role-badge {
   display: inline-block;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  font-size: 0.875rem;
+}
+
+.role-badge.admin {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.role-badge.supervisor {
+  background-color: #fff3cd;
+  color: #856404;
 }
 
 .role-badge.professional {

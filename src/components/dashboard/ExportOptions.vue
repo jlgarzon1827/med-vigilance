@@ -46,8 +46,13 @@
               <label for="status">Estado:</label>
               <select id="status" v-model="filters.status">
                 <option value="">Todos</option>
-                <option value="PENDING">Pendiente</option>
-                <option value="REVIEWED">Revisado</option>
+                <option value="CREATED">Creado</option>
+                <option value="ASSIGNED">Asignado</option>
+                <option value="IN_REVISION">En Revisión</option>
+                <option value="PENDING_INFORMATION">Pendiente de Información Adicional</option>
+                <option value="REJECTED">Rechazado</option>
+                <option value="RECLAIMED">Reclamado</option>
+                <option value="APPROVED">Aprobado</option>
               </select>
             </div>
           </div>
@@ -75,7 +80,7 @@
       </div>
     </div>
     
-    <div v-if="isLoading" class="loading-overlay">
+    <div v-if="isExporting" class="loading-overlay">
       <LoadingSpinner />
       <p>Preparando exportación...</p>
     </div>
@@ -83,7 +88,7 @@
 </template>
 
 <script>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useStore } from 'vuex'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
@@ -103,16 +108,25 @@ export default {
       status: ''
     })
     
+    const isExporting = ref(false)
+
     const exportData = async (format) => {
-      const validFilters = {}
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) validFilters[key] = value
-      })
-      
-      await store.dispatch('exportData', {
-        format,
-        filters: validFilters
-      })
+      isExporting.value = true
+      try {
+        const validFilters = {}
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) validFilters[key] = value
+        })
+        
+        await store.dispatch('exportData', {
+          format,
+          filters: validFilters
+        })
+      } catch (error) {
+        console.error('Error al exportar datos:', error)
+      } finally {
+        isExporting.value = false
+      }
     }
     
     const resetFilters = () => {
@@ -123,7 +137,7 @@ export default {
     
     return {
       filters,
-      isLoading: store.state.isLoading,
+      isExporting,
       exportData,
       resetFilters
     }

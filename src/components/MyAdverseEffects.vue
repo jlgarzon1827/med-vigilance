@@ -2,10 +2,10 @@
   <div class="my-adverse-effects">
     <h2>Mis Reportes de Efectos Adversos</h2>
     
-    <LoadingSpinner v-if="isLoading" />
+    <LoadingSpinner v-if="!isDataReady" />
     
     <div v-else>
-      <div v-if="adverseEffects.length" class="reports-list">
+      <div v-if="isDataReady && adverseEffects.length > 0" class="reports-list">
         <div v-for="effect in adverseEffects" :key="effect.id" class="report-card">
           <div class="report-header">
             <h3>{{ getMedicationName(effect.medication) }}</h3>
@@ -46,34 +46,88 @@
           <div class="report-status">
             <strong>Estado:</strong>
             <span :class="'status-badge ' + effect.status.toLowerCase()">
-              {{ effect.status === 'PENDING' ? 'Pendiente de revisión' : 'Revisado' }}
+              {{ 
+                effect.status === 'CREATED' ? 'Creado' : 
+                effect.status === 'ASSIGNED' ? 'Asignado' : 
+                effect.status === 'IN_REVISION' ? 'En Revisión' : 
+                effect.status === 'PENDING_INFORMATION' ? 'Pendiente de Información Adicional' : 
+                effect.status === 'REJECTED' ? 'Rechazado' : 
+                effect.status === 'RECLAIMED' ? 'Reclamado' : 
+                effect.status === 'APPROVED' ? 'Aprobado' : 
+                'Estado desconocido'
+              }}
             </span>
           </div>
           
           <div class="report-date">
             <strong>Reportado el:</strong> {{ formatDate(effect.reported_at) }}
           </div>
+          
+          <!-- Acciones -->
+          <div class="report-actions">
+            <!-- Botón para iniciar reclamación -->
+            <button
+              v-if="effect.status === 'REJECTED'"
+              @click="openReclamationModal(effect.id)"
+              class="btn btn-primary"
+            >
+              Iniciar Reclamación
+            </button>
+
+            <!-- Botón para proporcionar información adicional -->
+            <button
+              v-if="effect.status === 'PENDING_INFORMATION'"
+              @click="openAdditionalInfoModal(effect)"
+              class="btn btn-primary"
+            >
+              Proporcionar Información Adicional
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- Modal para reclamación -->
+      <ModalReclamation
+        v-if="showReclamationModal"
+        @close="showReclamationModal = false"
+        :reportId="reclamationReportId"
+      />
+
+      <!-- Modal para información adicional -->
+      <ModalAdditionalInfo
+        v-if="showAdditionalInfoModal"
+        @close="showAdditionalInfoModal = false"
+        :report="additionalInfoReport"
+      />
       
-      <div v-else class="no-reports">
+      <div v-if="adverseEffects.length === 0" class="no-reports">
         <p>No has reportado ningún efecto adverso todavía.</p>
         <button @click="goToReportForm" class="btn-report">Reportar un efecto adverso</button>
       </div>
     </div>
+    
+    <!-- Modal para reclamación -->
+    <ModalReclamation v-if="showReclamationModal" @close="showReclamationModal = false" :reportId="reclamationReportId" />
+    
+    <!-- Modal para información adicional -->
+    <ModalAdditionalInfo v-if="showAdditionalInfoModal" @close="showAdditionalInfoModal = false" :report="additionalInfoReport" />
   </div>
 </template>
 
 <script>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import ModalReclamation from '@/components/dashboard/ModalReclamation.vue'
+import ModalAdditionalInfo from '@/components/dashboard/ModalAdditionalInfo.vue'
 
 export default {
   name: 'MyAdverseEffects',
   components: {
-    LoadingSpinner
+    LoadingSpinner,
+    ModalReclamation,
+    ModalAdditionalInfo
   },
   setup() {
     const store = useStore()
@@ -81,6 +135,8 @@ export default {
     const isLoading = computed(() => store.state.isLoading)
     const adverseEffects = computed(() => store.state.adverseEffects || [])
     const medications = computed(() => store.state.medications || [])
+    const masterMedications = computed(() => store.state.masterMedications || [])
+    const isDataReady = ref(false)
     
     const formatDate = (dateString) => {
       const date = new Date(dateString)
@@ -88,28 +144,61 @@ export default {
     }
     
     const getMedicationName = (medicationId) => {
+      if (!medications.value || medications.value.length === 0) {
+        return 'Cargando...';
+      }
       const medication = medications.value.find(med => med.id === medicationId)
-      return medication ? medication.nombre : `Medicamento ${medicationId}`
+      if (!medication || !medication.medicamento_maestro_id) {
+        return 'No encontrado';
+      }
+      const medicationMaster = masterMedications.value.find(m => m.id === medication.medicamento_maestro_id)
+      return medicationMaster ? medicationMaster.nombre : `Medicamento ${medicationId}`
     }
     
     const goToReportForm = () => {
-      store.commit('setActiveTab', 'report-adverse');
-      router.replace('/dashboard');
+      router.replace('/dashboard/reports');
     }
     
-    onMounted(() => {
-      store.dispatch('fetchAdverseEffects')
+    const showReclamationModal = ref(false)
+    const reclamationReportId = ref(null)
+    
+    const openReclamationModal = (id) => {
+      showReclamationModal.value = true
+      reclamationReportId.value = id
+    }
+    
+    const showAdditionalInfoModal = ref(false)
+    const additionalInfoReport = ref(null)
+    
+    const openAdditionalInfoModal = (report) => {
+      showAdditionalInfoModal.value = true
+      additionalInfoReport.value = report
+    }
+    
+    onMounted(async () => {
       if (!medications.value.length) {
-        store.dispatch('fetchMedications')
+        await store.dispatch('fetchMedications')
       }
+      if (!masterMedications.value.length) {
+        await store.dispatch('fetchMasterMedications')
+      }
+      await store.dispatch('fetchAdverseEffects')
+      isDataReady.value = true;
     })
     
     return {
       isLoading,
+      isDataReady,
       adverseEffects,
       formatDate,
       getMedicationName,
-      goToReportForm
+      goToReportForm,
+      openReclamationModal,
+      showReclamationModal,
+      reclamationReportId,
+      openAdditionalInfoModal,
+      showAdditionalInfoModal,
+      additionalInfoReport
     }
   }
 }
@@ -179,12 +268,37 @@ h2 {
   color: #fff;
 }
 
-.status-badge.pending {
+.status-badge.creado {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-badge.asignado {
   background-color: #fff3cd;
   color: #664d03;
 }
 
-.status-badge.reviewed {
+.status-badge.en_revision {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.status-badge.pendiente_info {
+  background-color: #fff3cd;
+  color: #664d03;
+}
+
+.status-badge.rechazado {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.status-badge.reclamado {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-badge.aprobado {
   background-color: #d1e7dd;
   color: #0f5132;
 }

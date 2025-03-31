@@ -1,5 +1,5 @@
 import { createStore } from 'vuex'
-import axios from 'axios'
+import axios from '@/utils/axios'
 
 export default createStore({
   state: {
@@ -43,6 +43,21 @@ export default createStore({
       state.userProfile = profile
       state.userRole = profile?.profile?.user_type || 'PATIENT'
     },
+    setMasterMedications(state, medications) {
+      state.masterMedications = medications
+    },
+    addMasterMedication(state, medication) {
+      state.masterMedications.push(medication)
+    },
+    updateMasterMedication(state, medication) {
+      const index = state.masterMedications.findIndex(m => m.id === medication.id)
+      if (index !== -1) {
+        state.masterMedications.splice(index, 1, medication)
+      }
+    },
+    removeMasterMedication(state, id) {
+      state.masterMedications = state.masterMedications.filter(m => m.id !== id)
+    },
     updateMedication(state, updatedMedication) {
       const index = state.medications.findIndex(med => med.id === updatedMedication.id)
       if (index !== -1) {
@@ -85,17 +100,26 @@ export default createStore({
     setProfessionals(state, professionals) {
       state.professionals = professionals
     },
+    setSupervisorView(state, reports) {
+      state.supervisorView = reports;
+    },
+    updateSupervisorView(state, data) {
+      state.supervisorView = data;
+    },
     setAnalysisReport(state, report) {
       state.analysisReport = report
     },
     setCorrelationAnalysis(state, analysis) {
       state.correlationAnalysis = analysis
-    }
+    },
+    setSelectedReport(state, report) {
+      state.selectedReport = report;
+    },
   },
   actions: {
     async login({ commit }, { username, userPassword }) {
       try {
-        const response = await axios.post('http://localhost:8000/login/', {
+        const response = await axios.post('/login/', {
           username,
           password: userPassword
         })
@@ -125,7 +149,7 @@ export default createStore({
           userData.institution = institution
         }
         
-        await axios.post('http://localhost:8000/register/', userData)
+        await axios.post('/register/', userData)
 
         commit('setUser', username)
         return true
@@ -142,7 +166,7 @@ export default createStore({
     async fetchUserProfile({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/profile/')
+        const response = await axios.get('/profile/')
         commit('setUserProfile', response.data)
       } catch (error) {
         console.error('Error fetching profile:', error)
@@ -150,10 +174,112 @@ export default createStore({
         commit('setLoading', false)
       }
     },
+    async fetchInstitutions() {
+      try {
+        const response = await axios.get('/institutions/')
+        return response
+      } catch (error) {
+        console.error('Error fetching institutions:', error)
+        throw error
+      }
+    },
+    async createInstitution(_, data) {
+      try {
+        await axios.post('/institutions/', data)
+        return true
+      } catch (error) {
+        console.error('Error creating institution:', error)
+        throw error
+      }
+    },
+    async updateInstitution(_, data) {
+      try {
+        await axios.put(`http://localhost:8000/institutions/${data.id}/`, data)
+        return true
+      } catch (error) {
+        console.error('Error updating institution:', error)
+        throw error
+      }
+    },
+    async deleteInstitution(_, id) {
+      try {
+        await axios.delete(`http://localhost:8000/institutions/${id}/`)
+        return true
+      } catch (error) {
+        console.error('Error deleting institution:', error)
+        throw error
+      }
+    },
+    async fetchUsers() {
+      try {
+        const response = await axios.get('/users/')
+        return response
+      } catch (error) {
+        console.error('Error fetching users:', error)
+        throw error
+      }
+    },
+    async updateUserRole(_, data) {
+      try {
+        await axios.post(`http://localhost:8000/users/${data.userId}/set_role/`, { role: data.newRole })
+        return true
+      } catch (error) {
+        console.error('Error updating user role:', error)
+        throw error
+      }
+    },
+    async fetchMasterMedications({ commit }) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.get('/medicamentos-maestros/')
+        commit('setMasterMedications', response.data)
+      } catch (error) {
+        console.error('Error fetching master medications:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async addMasterMedication({ commit }, medicationData) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post('/medicamentos-maestros/', medicationData)
+        commit('addMasterMedication', response.data)
+      } catch (error) {
+        console.error('Error adding master medication:', error)
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async editMasterMedication({ commit }, medication) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.put(`http://localhost:8000/medicamentos-maestros/${medication.id}/`, medication)
+        commit('updateMasterMedication', response.data)
+        return true
+      } catch (error) {
+        console.error('Error updating master medication:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async deleteMasterMedication({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        await axios.delete(`http://localhost:8000/medicamentos-maestros/${id}/`)
+        commit('removeMasterMedication', id)
+        return true
+      } catch (error) {
+        console.error('Error deleting master medication:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },    
     async fetchMedications({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/medicamentos/')
+        const response = await axios.get('/medicamentos/')
         commit('setMedications', response.data)
       } catch (error) {
         console.error('Error fetching medications:', error)
@@ -164,7 +290,7 @@ export default createStore({
     async addMedication({ commit }, medicationData) {
       commit('setLoading', true)
       try {
-        const response = await axios.post('http://localhost:8000/medicamentos/', medicationData)
+        const response = await axios.post('/medicamentos/', medicationData)
         commit('addMedication', response.data)
       } catch (error) {
         console.error('Error adding medication:', error)
@@ -220,10 +346,23 @@ export default createStore({
         commit('setLoading', false);
       }
     },
+    async fetchReportDetails({ commit }, id) {
+      commit('setLoading', true);
+      try {
+        const response = await axios.get(`http://localhost:8000/adverse-effects/${id}/`);
+        commit('setSelectedReport', response.data);
+        return true;
+      } catch (error) {
+        console.error('Error obteniendo detalles del reporte:', error);
+        return false;
+      } finally {
+        commit('setLoading', false);
+      }
+    },    
     async reportAdverseEffect({ commit, state }, adverseEffectData) {
       commit('setLoading', true)
       try {
-        const response = await axios.post('http://localhost:8000/adverse-effects/', adverseEffectData)
+        const response = await axios.post('/adverse-effects/', adverseEffectData)
         // Actualizar la lista de efectos adversos
         commit('setAdverseEffects', [...state.adverseEffects, response.data])
         return true
@@ -234,10 +373,43 @@ export default createStore({
         commit('setLoading', false)
       }
     },
+    async updateReportStatus({ commit }, { reportId, status }) {
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/update-status/`, { status });
+        commit('updateAdverseEffect', response.data);
+        alert(`Estado del reporte actualizado a ${status}.`);
+      } catch (error) {
+        console.error(`Error updating report status to ${status}:`, error);
+      }
+    },
+    async revertReportStatus({ commit }, { reportId, reason }) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/revert_status/`, { reason })
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error al revertir estado:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },    
+    async fetchSupervisorView({ commit }, filters) {
+      try {
+        const response = await axios.get('/dashboard/supervisor_view/', {
+          params: filters
+        });
+        commit('updateSupervisorView', response.data.results);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching supervisor view:', error);
+      }
+    },
     async fetchDashboardStatistics({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/statistics/')
+        const response = await axios.get('/dashboard/statistics/')
         commit('setDashboardStatistics', response.data)
       } catch (error) {
         console.error('Error fetching dashboard statistics:', error)
@@ -248,7 +420,7 @@ export default createStore({
     async fetchMedicationStatistics({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/medication-statistics/')
+        const response = await axios.get('/dashboard/medication_statistics/')
         commit('setMedicationStatistics', response.data)
       } catch (error) {
         console.error('Error fetching medication statistics:', error)
@@ -270,7 +442,7 @@ export default createStore({
     async fetchPendingReviews({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/pending_reviews/');
+        const response = await axios.get('/dashboard/pending_reviews/');
         commit('setPendingReviews', response.data);
       } catch (error) {
         console.error('Error fetching pending reviews:', error);
@@ -278,37 +450,133 @@ export default createStore({
         commit('setLoading', false);
       }
     },
-    async markAsReviewed({ commit }, id) {
+    async approveReclamation({ commit }, id) {
       commit('setLoading', true)
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/mark_as_reviewed/`)
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/approve_reclamation/`)
         commit('updateAdverseEffect', response.data)
         return true
       } catch (error) {
-        console.error('Error marking as reviewed:', error)
+        console.error('Error aprobando reclamación:', error)
         return false
       } finally {
         commit('setLoading', false)
       }
     },
+    async rejectReclamation({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/reject_reclamation/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error rechazando reclamación:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async startReview({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/start_review/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error iniciando revisión:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async requestInfo({ commit }, id) {
+      commit('setLoading', true);
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/request_additional_info/`);
+        commit('updateAdverseEffect', response.data);
+        alert('Información adicional solicitada correctamente.');
+        return true;
+      } catch (error) {
+        console.error('Error solicitando información adicional:', error);
+        alert('Error solicitando información adicional.');
+        return false;
+      } finally {
+        commit('setLoading', false);
+      }
+    },    
+    async approveReport({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/approve_report/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error aprobando reporte:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async rejectReport({ commit }, id) {
+      commit('setLoading', true)
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/reject_report/`)
+        commit('updateAdverseEffect', response.data)
+        return true
+      } catch (error) {
+        console.error('Error rechazando reporte:', error)
+        return false
+      } finally {
+        commit('setLoading', false)
+      }
+    },
+    async startReclamation({ commit }, { id, reason }) {
+      commit('setLoading', true);
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/start_reclamation/`, {
+          reclamation_reason: reason,
+        });
+        commit('updateAdverseEffect', response.data);
+        alert('Reclamación iniciada correctamente.');
+        return true;
+      } catch (error) {
+        console.error('Error iniciando reclamación:', error);
+        alert('Error iniciando reclamación.');
+        return false;
+      } finally {
+        commit('setLoading', false);
+      }
+    },    
+    async provideAdditionalInfo({ commit }, { id, info }) {
+      commit('setLoading', true);
+      try {
+        const response = await axios.post(`http://localhost:8000/adverse-effects/${id}/provide_additional_info/`, {
+          additional_info: info,
+        });
+        commit('updateAdverseEffect', response.data);
+        alert('Información adicional proporcionada correctamente.');
+        return true;
+      } catch (error) {
+        console.error('Error proporcionando información adicional:', error);
+        alert('Error proporcionando información adicional.');
+        return false;
+      } finally {
+        commit('setLoading', false);
+      }
+    },    
     async fetchProfessionals({ commit }) {
       try {
-        const response = await axios.get('http://localhost:8000/users/?user_type=PROFESSIONAL');
+        const response = await axios.get('/users/?user_type=PROFESSIONAL');
         commit('setProfessionals', response.data);
       } catch (error) {
         console.error('Error fetching professionals:', error);
       }
     },
-    async assignReviewer({ commit }, { reportId, reviewerId }) {
+    async assignReviewer(_, { reportId, reviewerId }) {
       try {
-        const response = await axios.post(`http://localhost:8000/adverse-effects/${reportId}/assign-reviewer/`, {
-          reviewer_id: reviewerId,
-        });
-        console.log(response.data);
-    
-        // Example: Re-fetch pending reviews or update state
-        const updatedReviews = await axios.get('http://localhost:8000/dashboard/pending-reviews/');
-        commit('setPendingReviews', updatedReviews.data);
+        await axios.post(`http://localhost:8000/adverse-effects/${reportId}/assign-reviewer/`, { reviewer_id: reviewerId });
+        alert('Revisor asignado correctamente.');
+        await this.dispatch('fetchSupervisorView');
       } catch (error) {
         console.error('Error assigning reviewer:', error);
       }
@@ -347,7 +615,7 @@ export default createStore({
     async fetchAnalysisReport({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/analysis_report/')
+        const response = await axios.get('/dashboard/analysis_report/')
         commit('setAnalysisReport', response.data)
       } catch (error) {
         console.error('Error fetching analysis report:', error)
@@ -358,7 +626,7 @@ export default createStore({
     async fetchCorrelationAnalysis({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/correlation_analysis/')
+        const response = await axios.get('/dashboard/correlation_analysis/')
         commit('setCorrelationAnalysis', response.data)
       } catch (error) {
         console.error('Error fetching correlation analysis:', error)
@@ -391,11 +659,13 @@ export default createStore({
       } finally {
         commit('setLoading', false)
       }
-    }
+    },
   },
   getters: {
     isLoggedIn: state => !!state.token,
     activeTab: state => state.activeTab,
+    isAdmin: state => state.userProfile?.profile?.user_type === 'ADMIN',
+    isSupervisor: state => state.userProfile?.profile?.user_type === 'SUPERVISOR',
     isProfessional: state => {
       return state.userProfile && 
              state.userProfile.profile && 

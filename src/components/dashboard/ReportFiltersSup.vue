@@ -3,6 +3,7 @@
     <h3>Filtros</h3>
     <form @submit.prevent="applyFilters">
       <div class="filters-grid">
+        <!-- Filtro por severidad -->
         <div class="form-group">
           <label for="severity">Severidad:</label>
           <select id="severity" v-model="filters.severity">
@@ -13,7 +14,8 @@
             <option value="MORTAL">Mortal</option>
           </select>
         </div>
-        
+
+        <!-- Filtro por tipo -->
         <div class="form-group">
           <label for="type">Tipo:</label>
           <select id="type" v-model="filters.type">
@@ -22,22 +24,19 @@
             <option value="B">Tipo B - Bizarro/No predecible</option>
           </select>
         </div>
-        
+
+        <!-- Filtro por rango de fechas -->
         <div class="form-group">
           <label for="from-date">Desde:</label>
-          <input type="date" id="from-date" v-model="filters.from">
+          <input type="date" id="from-date" v-model="filters.fromDate">
         </div>
-        
+
         <div class="form-group">
           <label for="to-date">Hasta:</label>
-          <input type="date" id="to-date" v-model="filters.to">
+          <input type="date" id="to-date" v-model="filters.toDate">
         </div>
-        
-        <div class="form-group">
-          <label for="medication">Medicamento:</label>
-          <input type="text" id="medication" v-model="filters.medication" placeholder="Nombre del medicamento">
-        </div>
-        
+
+        <!-- Filtro por estado -->
         <div class="form-group">
           <label for="status">Estado:</label>
           <select id="status" v-model="filters.status">
@@ -51,55 +50,75 @@
             <option value="APPROVED">Aprobado</option>
           </select>
         </div>
+
+        <!-- Filtro por revisor -->
+        <div class="form-group">
+          <label for="reviewer">Revisor:</label>
+          <select id="reviewer" v-model="filters.reviewer">
+            <option value="">Todos los revisores</option>
+            <option v-for="professional in filteredProfessionals" :key="professional.id" :value="professional.id">
+              {{ professional.username }}
+            </option>
+          </select>
+        </div>
+
       </div>
-      
+
+      <!-- Botones de acción -->
       <div class="filter-actions">
-        <button type="submit" @click="applyFilters" class="btn-apply">Aplicar Filtros</button>
-        <button type="button" @click="resetFilters" class="btn-reset">Restablecer</button>
+        <button type="submit" @click.prevent="applyFilters" class="btn-apply">Aplicar Filtros</button>
+        <button type="button" @click.prevent="resetFilters" class="btn-reset">Restablecer</button>
       </div>
     </form>
   </div>
 </template>
 
 <script>
-import { reactive } from 'vue'
-import { useStore } from 'vuex'
+import { computed, reactive } from 'vue';
+import { useStore } from 'vuex';
 
 export default {
-  name: 'ReportFilters',
+  name: 'ReportFiltersSup',
   setup() {
-    const store = useStore()
-    
+    const store = useStore();
+    const professionals = computed(() => store.state.professionals || []);
+
+    const filteredProfessionals = computed(() => {
+      const supervisorInstitution = store.state.userProfile?.profile?.institution;
+      return professionals.value.filter(professional => professional.profile?.institution === supervisorInstitution);
+    });
+
     const filters = reactive({
       severity: '',
       type: '',
-      from: '',
-      to: '',
-      medication: '',
-      status: ''
-    })
-    
+      fromDate: '',
+      toDate: '',
+      status: '',
+      reviewer: ''
+    });
+
     const applyFilters = () => {
       const nonEmptyFilters = Object.fromEntries(
         Object.entries(filters).filter(([, value]) => value !== '')
-      )
-      store.dispatch('fetchAdverseEffects', nonEmptyFilters)
-    }
-    
+      );
+      store.dispatch('fetchSupervisorView', nonEmptyFilters);
+    };
+
     const resetFilters = () => {
       Object.keys(filters).forEach(key => {
-        filters[key] = ''
-      })
-      store.dispatch('fetchAdverseEffects', {})
-    }
-    
+        filters[key] = '';
+      });
+      store.dispatch('fetchSupervisorView', {});
+    };
+
     return {
+      filteredProfessionals,
       filters,
       applyFilters,
       resetFilters
-    }
+    };
   }
-}
+};
 </script>
 
 <style scoped>
@@ -127,7 +146,8 @@ export default {
   color: #495057;
 }
 
-.form-group input, .form-group select {
+.form-group input,
+.form-group select {
   padding: 0.5rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
@@ -140,29 +160,18 @@ export default {
   margin-top: 1.5rem;
 }
 
-.btn-apply, .btn-reset {
+.btn-apply,
+.btn-reset {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
 }
 
 .btn-apply {
   background-color: #e4fdff;
-  color: #000;
 }
 
 .btn-reset {
   background-color: #f8f9fa;
-  border: 1px solid #ced4da;
-  color: #495057;
-}
-
-.btn-apply:hover {
-  background-color: #7da9bd;
-}
-
-.btn-reset:hover {
-  background-color: #e9ecef;
 }
 </style>

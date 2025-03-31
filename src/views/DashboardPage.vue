@@ -3,10 +3,34 @@
     <h1>Dashboard de Farmacovigilancia</h1>
     
     <div class="dashboard-tabs">
-      <!-- Mostrar todas las pestañas para profesionales -->
-      <template v-if="isProfessional">
+      <!-- Mostrar todas las pestañas para administradores -->
+      <template v-if="isAdmin">
         <div 
-          v-for="tab in tabs" 
+          v-for="tab in adminTabs" 
+          :key="tab.id" 
+          :class="['tab', { active: activeTab === tab.id }]"
+          @click="activeTab = tab.id"
+        >
+          {{ tab.name }}
+        </div>
+      </template>
+      
+      <!-- Mostrar todas las pestañas para supervisores -->
+      <template v-if="isSupervisor && !isAdmin">
+        <div 
+          v-for="tab in supervisorTabs" 
+          :key="tab.id" 
+          :class="['tab', { active: activeTab === tab.id }]"
+          @click="activeTab = tab.id"
+        >
+          {{ tab.name }}
+        </div>
+      </template>
+      
+      <!-- Mostrar todas las pestañas para profesionales -->
+      <template v-if="isProfessional && !isAdmin && !isSupervisor">
+        <div 
+          v-for="tab in professionalTabs" 
           :key="tab.id" 
           :class="['tab', { active: activeTab === tab.id }]"
           @click="activeTab = tab.id"
@@ -16,7 +40,7 @@
       </template>
       
       <!-- Mostrar solo pestañas relevantes para pacientes -->
-      <template v-else>
+      <template v-if="isPatient">
         <div 
           v-for="tab in patientTabs" 
           :key="tab.id" 
@@ -29,19 +53,19 @@
     </div>
     
     <div class="dashboard-content">
-      <!-- Estadísticas generales (solo profesionales) -->
-      <div v-if="activeTab === 'statistics' && isProfessional" class="tab-content">
+      <!-- Estadísticas generales (solo supervisores) -->
+      <div v-if="activeTab === 'statistics' && isSupervisor" class="tab-content">
         <StatisticsPanel />
       </div>
       
-      <!-- TODO jlgarzon Estadísticas por medicamento (solo profesionales) -->
-      <!-- <div v-if="activeTab === 'medication-stats' && isProfessional" class="tab-content">
-        <MedicationStatistics />
-      </div> -->
-      
-      <!-- Tendencias (solo profesionales) -->
-      <div v-if="activeTab === 'trends' && isProfessional" class="tab-content">
+      <!-- Tendencias (solo supervisores) -->
+      <div v-if="activeTab === 'trends' && isSupervisor" class="tab-content">
         <TrendsPanel />
+      </div>
+
+      <!-- Estadísticas por medicamento (solo supervisores) -->
+      <div v-if="activeTab === 'medication-statistics' && isSupervisor" class="tab-content">
+        <MedicationStatistics />
       </div>
       
       <!-- Reportes de efectos adversos (solo profesionales) -->
@@ -54,25 +78,30 @@
         <PendingReviews />
       </div>
       
-      <!-- Exportación de datos (solo profesionales) -->
-      <div v-if="activeTab === 'export' && isProfessional" class="tab-content">
+      <!-- Exportación de datos (solo administradores) -->
+      <div v-if="activeTab === 'export' && isAdmin" class="tab-content">
         <ExportOptions />
       </div>
       
-      <!-- Medicamentos (ambos roles) -->
-      <div v-if="activeTab === 'medications'" class="tab-content">
+      <!-- Medicamentos (solo pacientes y profesionales) -->
+      <div v-if="activeTab === 'medications' && (isPatient || isProfessional)" class="tab-content">
         <MedicationList @showAddModal="showAddModal = true" />
         <AddMedication v-if="showAddModal" @close="showAddModal = false" />
       </div>
       
       <!-- Reportar efectos adversos (solo pacientes) -->
-      <div v-if="activeTab === 'report-adverse' && !isProfessional" class="tab-content">
+      <div v-if="activeTab === 'report-adverse' && isPatient" class="tab-content">
         <ReportAdverseEffect />
       </div>
       
       <!-- Mis reportes (solo pacientes) -->
-      <div v-if="activeTab === 'my-reports' && !isProfessional" class="tab-content">
+      <div v-if="activeTab === 'my-reports' && isPatient" class="tab-content">
         <MyAdverseEffects />
+      </div>
+      
+      <!-- Vista general de reportes para supervisores -->
+      <div v-if="activeTab === 'supervisor-view' && isSupervisor" class="tab-content">
+        <SupervisorDashboard />
       </div>
     </div>
   </div>
@@ -84,13 +113,14 @@ import { useStore } from 'vuex'
 import MedicationList from '@/components/MedicationList.vue'
 import AddMedication from '@/components/AddMedication.vue'
 import StatisticsPanel from '@/components/dashboard/StatisticsPanel.vue'
-// TODO jlgarzon import MedicationStatistics from '@/components/dashboard/MedicationStatistics.vue'
 import TrendsPanel from '@/components/dashboard/TrendsPanel.vue'
 import ReportsList from '@/components/dashboard/ReportsList.vue'
 import PendingReviews from '@/components/dashboard/PendingReviews.vue'
 import ExportOptions from '@/components/dashboard/ExportOptions.vue'
 import ReportAdverseEffect from '@/components/ReportAdverseEffect.vue'
 import MyAdverseEffects from '@/components/MyAdverseEffects.vue'
+import SupervisorDashboard from '@/components/dashboard/SupervisorDashboard.vue'
+import MedicationStatistics from '@/components/dashboard/MedicationStatistics.vue'
 
 export default {
   name: 'DashboardPage',
@@ -98,13 +128,14 @@ export default {
     MedicationList,
     AddMedication,
     StatisticsPanel,
-    // TODO jlgarzon MedicationStatistics,
     TrendsPanel,
+    MedicationStatistics,
     ReportsList,
     PendingReviews,
     ExportOptions,
     ReportAdverseEffect,
-    MyAdverseEffects
+    MyAdverseEffects,
+    SupervisorDashboard
   },
   setup() {
     const store = useStore()
@@ -117,27 +148,44 @@ export default {
         localStorage.setItem('activeTab', value)
       }
     })
+    
     const setValidActiveTab = () => {
       const currentTab = activeTab.value;
-      const availableTabs = isProfessional.value ? tabs : patientTabs.value;
+      const availableTabs = isAdmin.value ? adminTabs : isSupervisor.value ? supervisorTabs : isProfessional.value ? professionalTabs : patientTabs.value;
 
       if (!availableTabs.some(tab => tab.id === currentTab)) {
         activeTab.value = availableTabs[0].id;
       }
     }
+    
     const userProfile = computed(() => store.state.userProfile)
+    const isAdmin = computed(() => {
+      return userProfile.value?.profile?.user_type === 'ADMIN'
+    })
+    const isSupervisor = computed(() => {
+      return userProfile.value?.profile?.user_type === 'SUPERVISOR'
+    })
     const isProfessional = computed(() => {
       return userProfile.value?.profile?.user_type === 'PROFESSIONAL'
     })
+    const isPatient = computed(() => {
+      return userProfile.value?.profile?.user_type === 'PATIENT'
+    })
     
-    const tabs = [
+    const adminTabs = [
+      { id: 'export', name: 'Exportar Datos' }
+    ]
+    
+    const supervisorTabs = [
+      { id: 'supervisor-view', name: 'Vista General de Reportes' },
       { id: 'statistics', name: 'Estadísticas Generales' },
-      // TODO jlgarzon { id: 'medication-stats', name: 'Estadísticas por Medicamento' },
       { id: 'trends', name: 'Tendencias' },
+      { id: 'medication-statistics', name: 'Estadísticas por Medicamento' }
+    ]
+    
+    const professionalTabs = [
       { id: 'reports', name: 'Reportes' },
-      { id: 'pending', name: 'Revisiones Pendientes' },
-      { id: 'export', name: 'Exportar Datos' },
-      { id: 'medications', name: 'Mis Medicamentos' }
+      { id: 'pending', name: 'Revisiones Pendientes' }
     ]
     
     const patientTabs = computed(() => {
@@ -148,31 +196,65 @@ export default {
       ]
     })
     
+    const showStatistics = computed(() => {
+      return store.state.dashboardStatistics.length > 0
+    })
+    
+    const showTrends = computed(() => {
+      return store.state.trends.length > 0
+    })
+    
     onMounted(() => {
       const savedTab = localStorage.getItem('activeTab')
       if (savedTab) {
         store.commit('setActiveTab', savedTab)
       }
-
-      // Cargar datos del perfil de usuario si no están cargados
       if (!userProfile.value) {
         store.dispatch('fetchUserProfile')
       }
       else {
         setValidActiveTab();
       }
-      
-      // Cargar datos necesarios para el dashboard
-      if (isProfessional.value) {
+      if (isAdmin.value) {
+        store.dispatch('fetchAdverseEffects')
+        store.dispatch('fetchDashboardStatistics')
+      } else if (isSupervisor.value) {
+        store.dispatch('fetchSupervisorView')
+        store.dispatch('fetchDashboardStatistics')
+      } else if (isProfessional.value) {
         store.dispatch('fetchAdverseEffects')
         store.dispatch('fetchDashboardStatistics')
       }
-      
-      // Cargar medicamentos para todos los usuarios
       store.dispatch('fetchMedications')
     })
     
-    // Vigilar cambios en el perfil para cargar datos cuando sea necesario
+    watch(isAdmin, (newValue) => {
+      if (newValue) {
+        store.dispatch('fetchDashboardStatistics')
+      }
+      
+      // Si el usuario no es administrador y está en una pestaña de administrador, redirigir a medicamentos
+      if (!newValue && !adminTabs.some(tab => tab.id === activeTab.value)) {
+        activeTab.value = 'medications'
+      }
+
+      setValidActiveTab()
+    })
+
+    watch(isSupervisor, (newValue) => {
+      if (newValue) {
+        store.dispatch('fetchSupervisorView')
+        store.dispatch('fetchDashboardStatistics')
+      }
+      
+      // Si el usuario no es supervisor y está en una pestaña de supervisor, redirigir a medicamentos
+      if (!newValue && !supervisorTabs.some(tab => tab.id === activeTab.value)) {
+        activeTab.value = 'medications'
+      }
+
+      setValidActiveTab()
+    })
+
     watch(isProfessional, (newValue) => {
       if (newValue) {
         store.dispatch('fetchAdverseEffects')
@@ -180,7 +262,7 @@ export default {
       }
       
       // Si el usuario no es profesional y está en una pestaña de profesional, redirigir a medicamentos
-      if (!newValue && !patientTabs.value.some(tab => tab.id === activeTab.value)) {
+      if (!newValue && !professionalTabs.some(tab => tab.id === activeTab.value)) {
         activeTab.value = 'medications'
       }
 
@@ -191,11 +273,18 @@ export default {
       username,
       showAddModal,
       activeTab,
-      tabs,
+      adminTabs,
+      supervisorTabs,
+      professionalTabs,
       patientTabs,
       userProfile,
+      isAdmin,
+      isSupervisor,
       isProfessional,
-      setValidActiveTab
+      isPatient,
+      setValidActiveTab,
+      showStatistics,
+      showTrends
     }
   }
 }

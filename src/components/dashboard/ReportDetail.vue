@@ -1,4 +1,3 @@
-<!-- components/dashboard/ReportDetail.vue -->
 <template>
   <div class="report-detail-modal">
     <div class="modal-content">
@@ -17,7 +16,7 @@
             </div>
             <div class="info-item">
               <span class="label">Medicamento:</span>
-              <span class="value">{{ report.medication_name || 'Med ' + report.medication }}</span>
+              <span class="value">{{ report.medicamento_nombre || 'Med ' + report.medication }}</span>
             </div>
             <div class="info-item">
               <span class="label">Fecha Reporte:</span>
@@ -25,7 +24,18 @@
             </div>
             <div class="info-item">
               <span class="label">Estado:</span>
-              <span :class="'status-badge ' + report.status.toLowerCase()">{{ report.status }}</span>
+              <span :class="'status-badge ' + report.status.toLowerCase()">
+                {{ 
+                  report.status === 'CREATED' ? 'Creado' : 
+                  report.status === 'ASSIGNED' ? 'Asignado' : 
+                  report.status === 'IN_REVISION' ? 'En Revisión' : 
+                  report.status === 'PENDING_INFORMATION' ? 'Pendiente de Información Adicional' : 
+                  report.status === 'REJECTED' ? 'Rechazado' : 
+                  report.status === 'RECLAIMED' ? 'Reclamado' : 
+                  report.status === 'APPROVED' ? 'Aprobado' : 
+                  'Estado desconocido'
+                }}
+              </span>
             </div>
           </div>
         </div>
@@ -234,12 +244,37 @@ export default {
   color: #fff;
 }
 
-.status-badge.pending {
+.status-badge.creado {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-badge.asignado {
   background-color: #fff3cd;
   color: #664d03;
 }
 
-.status-badge.reviewed {
+.status-badge.en_revision {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.status-badge.pendiente_info {
+  background-color: #fff3cd;
+  color: #664d03;
+}
+
+.status-badge.rechazado {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.status-badge.reclamado {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-badge.aprobado {
   background-color: #d1e7dd;
   color: #0f5132;
 }

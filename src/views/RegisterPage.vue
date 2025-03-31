@@ -104,13 +104,16 @@
           <div class="form-group">
             <div class="input-row">
               <label for="institution">Institución:</label>
-              <input 
-                type="text" 
+              <select 
                 id="institution" 
-                v-model="institution" 
-                placeholder="Ej: Hospital Universitario"
+                v-model="institution"
                 required
               >
+                <option value="" disabled>Seleccione una institución</option>
+                <option v-for="institution in institutions" :key="institution.id" :value="institution.id">
+                  {{ institution.name }}
+                </option>
+              </select>
             </div>
             <span v-if="errors.institution" class="error-message">{{ errors.institution }}</span>
           </div>
@@ -146,6 +149,7 @@ export default {
     const professionalId = ref('')
     const specialty = ref('')
     const institution = ref('')
+    const institutions = ref([])
     const error = ref(null)
     const errors = reactive({
       username: '',
@@ -158,7 +162,7 @@ export default {
     })
     
     const isProfessional = computed(() => userType.value === 'PROFESSIONAL')
-    
+
     const toggleProfessionalFields = () => {
       if (!isProfessional.value) {
         professionalId.value = ''
@@ -206,7 +210,6 @@ export default {
         isValid = false
       }
       
-      // Validaciones para campos de profesionales
       if (isProfessional.value) {
         if (!professionalId.value) {
           errors.professionalId = 'El ID profesional es requerido'
@@ -218,7 +221,7 @@ export default {
           isValid = false
         }
         
-        if (!institution.value) {
+        if (!institution.value || institution.value === '') {
           errors.institution = 'La institución es requerida'
           isValid = false
         }
@@ -251,6 +254,17 @@ export default {
       }
     }
 
+    const fetchInstitutions = async () => {
+      try {
+        const response = await store.dispatch('fetchInstitutions')
+        institutions.value = response.data
+      } catch (e) {
+        console.error('Error al cargar instituciones:', e)
+      }
+    }
+
+    fetchInstitutions()
+
     return {
       username,
       email,
@@ -260,6 +274,7 @@ export default {
       professionalId,
       specialty,
       institution,
+      institutions,
       isProfessional,
       error,
       errors,
@@ -320,7 +335,6 @@ h2 {
   color: #dc3545;
   font-size: 0.875rem;
   margin-top: 0.25rem;
-  margin-left: calc(150px + 1rem);
 }
 
 .button-group {

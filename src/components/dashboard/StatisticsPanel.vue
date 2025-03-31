@@ -1,4 +1,3 @@
-<!-- components/dashboard/StatisticsPanel.vue -->
 <template>
   <div class="statistics-panel">
     <LoadingSpinner v-if="isLoading" />
