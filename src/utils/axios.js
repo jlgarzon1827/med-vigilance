@@ -1,27 +1,7 @@
-import axios from 'axios'
-import store from '@/store'
-import router from '@/router'
+import axios from 'axios';
 
-axios.interceptors.request.use(
-  (config) => {
-    const token = store.state.token
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => Promise.reject(error)
-)
+const instance = axios.create({
+  baseURL: process.env.VUE_APP_API_ROOT_URL,
+});
 
-axios.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response.status === 401) {
-      await store.dispatch('logout')
-      router.push('/login')
-    }
-    return Promise.reject(error)
-  }
-)
-
-export default axios
+export default instance;

@@ -1,5 +1,5 @@
 import { createStore } from 'vuex'
-import axios from 'axios'
+import axios from '@/utils/axios'
 
 export default createStore({
   state: {
@@ -119,7 +119,7 @@ export default createStore({
   actions: {
     async login({ commit }, { username, userPassword }) {
       try {
-        const response = await axios.post('http://localhost:8000/login/', {
+        const response = await axios.post('/login/', {
           username,
           password: userPassword
         })
@@ -149,7 +149,7 @@ export default createStore({
           userData.institution = institution
         }
         
-        await axios.post('http://localhost:8000/register/', userData)
+        await axios.post('/register/', userData)
 
         commit('setUser', username)
         return true
@@ -166,7 +166,7 @@ export default createStore({
     async fetchUserProfile({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/profile/')
+        const response = await axios.get('/profile/')
         commit('setUserProfile', response.data)
       } catch (error) {
         console.error('Error fetching profile:', error)
@@ -176,7 +176,7 @@ export default createStore({
     },
     async fetchInstitutions() {
       try {
-        const response = await axios.get('http://localhost:8000/institutions/')
+        const response = await axios.get('/institutions/')
         return response
       } catch (error) {
         console.error('Error fetching institutions:', error)
@@ -185,7 +185,7 @@ export default createStore({
     },
     async createInstitution(_, data) {
       try {
-        await axios.post('http://localhost:8000/institutions/', data)
+        await axios.post('/institutions/', data)
         return true
       } catch (error) {
         console.error('Error creating institution:', error)
@@ -212,7 +212,7 @@ export default createStore({
     },
     async fetchUsers() {
       try {
-        const response = await axios.get('http://localhost:8000/users/')
+        const response = await axios.get('/users/')
         return response
       } catch (error) {
         console.error('Error fetching users:', error)
@@ -231,7 +231,7 @@ export default createStore({
     async fetchMasterMedications({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/medicamentos-maestros/')
+        const response = await axios.get('/medicamentos-maestros/')
         commit('setMasterMedications', response.data)
       } catch (error) {
         console.error('Error fetching master medications:', error)
@@ -242,7 +242,7 @@ export default createStore({
     async addMasterMedication({ commit }, medicationData) {
       commit('setLoading', true)
       try {
-        const response = await axios.post('http://localhost:8000/medicamentos-maestros/', medicationData)
+        const response = await axios.post('/medicamentos-maestros/', medicationData)
         commit('addMasterMedication', response.data)
       } catch (error) {
         console.error('Error adding master medication:', error)
@@ -279,7 +279,7 @@ export default createStore({
     async fetchMedications({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/medicamentos/')
+        const response = await axios.get('/medicamentos/')
         commit('setMedications', response.data)
       } catch (error) {
         console.error('Error fetching medications:', error)
@@ -290,7 +290,7 @@ export default createStore({
     async addMedication({ commit }, medicationData) {
       commit('setLoading', true)
       try {
-        const response = await axios.post('http://localhost:8000/medicamentos/', medicationData)
+        const response = await axios.post('/medicamentos/', medicationData)
         commit('addMedication', response.data)
       } catch (error) {
         console.error('Error adding medication:', error)
@@ -362,7 +362,7 @@ export default createStore({
     async reportAdverseEffect({ commit, state }, adverseEffectData) {
       commit('setLoading', true)
       try {
-        const response = await axios.post('http://localhost:8000/adverse-effects/', adverseEffectData)
+        const response = await axios.post('/adverse-effects/', adverseEffectData)
         // Actualizar la lista de efectos adversos
         commit('setAdverseEffects', [...state.adverseEffects, response.data])
         return true
@@ -397,7 +397,7 @@ export default createStore({
     },    
     async fetchSupervisorView({ commit }, filters) {
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/supervisor_view/', {
+        const response = await axios.get('/dashboard/supervisor_view/', {
           params: filters
         });
         commit('updateSupervisorView', response.data.results);
@@ -409,7 +409,7 @@ export default createStore({
     async fetchDashboardStatistics({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/statistics/')
+        const response = await axios.get('/dashboard/statistics/')
         commit('setDashboardStatistics', response.data)
       } catch (error) {
         console.error('Error fetching dashboard statistics:', error)
@@ -420,7 +420,7 @@ export default createStore({
     async fetchMedicationStatistics({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/medication_statistics/')
+        const response = await axios.get('/dashboard/medication_statistics/')
         commit('setMedicationStatistics', response.data)
       } catch (error) {
         console.error('Error fetching medication statistics:', error)
@@ -442,7 +442,7 @@ export default createStore({
     async fetchPendingReviews({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/pending_reviews/');
+        const response = await axios.get('/dashboard/pending_reviews/');
         commit('setPendingReviews', response.data);
       } catch (error) {
         console.error('Error fetching pending reviews:', error);
@@ -566,7 +566,7 @@ export default createStore({
     },    
     async fetchProfessionals({ commit }) {
       try {
-        const response = await axios.get('http://localhost:8000/users/?user_type=PROFESSIONAL');
+        const response = await axios.get('/users/?user_type=PROFESSIONAL');
         commit('setProfessionals', response.data);
       } catch (error) {
         console.error('Error fetching professionals:', error);
@@ -615,7 +615,7 @@ export default createStore({
     async fetchAnalysisReport({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/analysis_report/')
+        const response = await axios.get('/dashboard/analysis_report/')
         commit('setAnalysisReport', response.data)
       } catch (error) {
         console.error('Error fetching analysis report:', error)
@@ -626,7 +626,7 @@ export default createStore({
     async fetchCorrelationAnalysis({ commit }) {
       commit('setLoading', true)
       try {
-        const response = await axios.get('http://localhost:8000/dashboard/correlation_analysis/')
+        const response = await axios.get('/dashboard/correlation_analysis/')
         commit('setCorrelationAnalysis', response.data)
       } catch (error) {
         console.error('Error fetching correlation analysis:', error)

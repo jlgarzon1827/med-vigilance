@@ -60,7 +60,7 @@
 import { ref, reactive } from 'vue'
 import { useStore } from 'vuex'
 import { validateMedication } from '@/utils/validations'
-import axios from 'axios'
+import axios from '@/utils/axios'
 
 export default {
   name: 'AddMedication',
@@ -78,7 +78,7 @@ export default {
     })
 
     // Cargar medicamentos maestros
-    axios.get('http://localhost:8000/medicamentos-maestros/')
+    axios.get('/medicamentos-maestros/')
       .then(response => {
         medications.value = response.data
       })
