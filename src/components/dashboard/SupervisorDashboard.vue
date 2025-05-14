@@ -1,5 +1,5 @@
 <template>
-  <div class="supervisor-dashboard">
+  <div class="supervisor-dashboard" :key="$store.state.refreshKey">
     <LoadingSpinner v-if="isLoading" />
     
     <div v-else>

@@ -77,7 +77,7 @@ export default {
       if (!newMessage.value.trim()) return
       try {
         await store.dispatch('sendMessage', {
-          reportId: localReport.value.id,
+          effectId: localReport.value.id,
           message: newMessage.value.trim(),
           sender: 'professional'
         })
@@ -95,7 +95,7 @@ export default {
 
     const closeChat = async () => {
       try {
-        await store.dispatch('close_chat', localReport.value.id)
+        await store.dispatch('closeChat', localReport.value.id)
         alert('Chat cerrado correctamente.')
         emit('close')
       } catch (error) {

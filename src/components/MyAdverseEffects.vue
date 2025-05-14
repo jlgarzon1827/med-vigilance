@@ -1,5 +1,5 @@
 <template>
-  <div class="my-adverse-effects">
+  <div class="my-adverse-effects" :key="$store.state.refreshKey">
     <h2>Mis Reportes de Efectos Adversos</h2>
     
     <LoadingSpinner v-if="!isDataReady" />

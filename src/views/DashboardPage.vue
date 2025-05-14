@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard">
+  <div class="dashboard" :key="$store.state.refreshKey">
     <h1>Dashboard de Farmacovigilancia</h1>
     
     <div class="dashboard-tabs">

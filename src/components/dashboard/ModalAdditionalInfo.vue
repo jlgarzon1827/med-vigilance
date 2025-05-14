@@ -61,7 +61,7 @@ export default {
       if (!newMessage.value.trim()) return
       try {
         await store.dispatch('sendMessage', {
-          reportId: localReport.value.id,
+          effectId: localReport.value.id,
           message: newMessage.value.trim(),
         })
         // Opcional: Recargar mensajes desde la store si es necesario
@@ -81,8 +81,11 @@ export default {
     watch(
       () => props.report,
       (newReport) => {
-        localReport.value = { ...newReport }
-        console.log('Reporte:', newReport)
+        if (newReport && newReport.id) {
+          localReport.value = { ...newReport }
+        } else {
+          localReport.value = {}
+        }
       },
       { immediate: true }
     )

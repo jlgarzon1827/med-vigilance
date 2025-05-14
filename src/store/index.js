@@ -17,9 +17,13 @@ export default createStore({
     activeTab: 'medications',
     professionals: [],
     analysisReport: null,
-    correlationAnalysis: null
+    correlationAnalysis: null,
+    refreshKey: 0
   },
   mutations: {
+    incrementRefreshKey(state) {
+      state.refreshKey += 1;
+    },
     setUser(state, user) {
       state.user = user
     },
@@ -446,29 +450,6 @@ export default createStore({
     async sendMessage({ commit, state }, { effectId, message }) {
       try {
         const user = state.userProfile.profile;
-        const effect = state.adverseEffects.find(effect => effect.id === effectId);
-        
-        // Verificar permisos con datos reales
-        if (!effect) {
-          throw new Error('Reporte no encontrado');
-        }
-    
-        const userId = state.userProfile.id; // ID numérico (4 en el ejemplo)
-        
-        if (user.user_type === 'PATIENT') {
-          if (effect.patient !== userId) { // Comparación directa de números
-            throw new Error('Solo el paciente asociado puede enviar mensajes');
-          }
-        } 
-        else if (user.user_type === 'PROFESSIONAL') {
-          if (effect.reviewer !== userId) { // Comparación directa de números
-            throw new Error('Solo el profesional asignado puede enviar mensajes');
-          }
-        } 
-        else {
-          throw new Error('Tipo de usuario no válido');
-        }
-    
         const sender = user.user_type.toLowerCase(); // 'patient' o 'professional'
         
         // Llamada API
@@ -560,6 +541,7 @@ export default createStore({
       try {
         const response = await axios.post(`/adverse-effects/${id}/approve_reclamation/`)
         commit('updateAdverseEffect', response.data)
+        commit('incrementRefreshKey');
         return true
       } catch (error) {
         console.error('Error aprobando reclamación:', error)
@@ -573,6 +555,7 @@ export default createStore({
       try {
         const response = await axios.post(`/adverse-effects/${id}/reject_reclamation/`)
         commit('updateAdverseEffect', response.data)
+        commit('incrementRefreshKey');
         return true
       } catch (error) {
         console.error('Error rechazando reclamación:', error)
@@ -586,6 +569,7 @@ export default createStore({
       try {
         const response = await axios.post(`/adverse-effects/${id}/start_review/`)
         commit('updateAdverseEffect', response.data)
+        commit('incrementRefreshKey');
         return true
       } catch (error) {
         console.error('Error iniciando revisión:', error)
@@ -600,6 +584,7 @@ export default createStore({
         const response = await axios.post(`/adverse-effects/${id}/request_additional_info/`);
         commit('updateAdverseEffect', response.data);
         alert('Información adicional solicitada correctamente.');
+        commit('incrementRefreshKey');
         return true;
       } catch (error) {
         console.error('Error solicitando información adicional:', error);
@@ -614,6 +599,7 @@ export default createStore({
       try {
         const response = await axios.post(`/adverse-effects/${id}/approve_report/`)
         commit('updateAdverseEffect', response.data)
+        commit('incrementRefreshKey');
         return true
       } catch (error) {
         console.error('Error aprobando reporte:', error)
@@ -627,6 +613,7 @@ export default createStore({
       try {
         const response = await axios.post(`/adverse-effects/${id}/reject_report/`)
         commit('updateAdverseEffect', response.data)
+        commit('incrementRefreshKey');
         return true
       } catch (error) {
         console.error('Error rechazando reporte:', error)
@@ -643,6 +630,7 @@ export default createStore({
         });
         commit('updateAdverseEffect', response.data);
         alert('Reclamación iniciada correctamente.');
+        commit('incrementRefreshKey');
         return true;
       } catch (error) {
         console.error('Error iniciando reclamación:', error);
@@ -660,6 +648,7 @@ export default createStore({
         });
         commit('updateAdverseEffect', response.data);
         alert('Información adicional proporcionada correctamente.');
+        commit('incrementRefreshKey');
         return true;
       } catch (error) {
         console.error('Error proporcionando información adicional:', error);
