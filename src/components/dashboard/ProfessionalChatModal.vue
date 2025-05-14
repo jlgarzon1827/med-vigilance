@@ -1,8 +1,9 @@
+<!-- ProfessionalChatModal.vue -->
 <template>
   <div class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Mensajes del Reporte</h5>
+        <h5 class="modal-title">Chat con Paciente</h5>
         <button type="button" class="btn-close" @click="$emit('close')">&times;</button>
       </div>
       <div class="modal-body">
@@ -10,10 +11,10 @@
           <div
             v-for="(msg, idx) in localReport.chat_messages"
             :key="idx"
-            :class="['chat-message', msg.sender === 'patient' ? 'from-patient' : 'from-reviewer']"
+            :class="['chat-message', msg.sender === 'patient' ? 'from-patient' : 'from-professional']"
           >
             <div class="message-meta">
-              <span class="sender">{{ msg.sender === 'patient' ? 'Paciente' : 'Revisor' }}</span>
+              <span class="sender">{{ msg.sender === 'patient' ? 'Paciente' : 'Profesional' }}</span>
               <span class="timestamp">{{ formatTimestamp(msg.timestamp) }}</span>
             </div>
             <div class="message-content">{{ msg.message }}</div>
@@ -31,6 +32,13 @@
           ></textarea>
           <button type="submit" class="btn-send" :disabled="!newMessage.trim()">Enviar</button>
         </form>
+        <button
+          v-if="localReport.status === 'PENDING_INFORMATION'"
+          @click="closeChat"
+          class="btn-close-chat"
+        >
+          Cerrar Chat
+        </button>
       </div>
     </div>
   </div>
@@ -41,16 +49,24 @@ import { ref, watch } from 'vue'
 import { useStore } from 'vuex'
 
 export default {
-  name: 'ModalAdditionalInfo',
+  name: 'ProfessionalChatModal',
   props: {
     report: Object,
   },
-  setup(props) {
+  emits: ['close'],
+  setup(props, { emit }) {
     const store = useStore()
     const localReport = ref({ ...props.report })
     const newMessage = ref('')
 
-    // Formatea la fecha y hora del mensaje
+    watch(
+      () => props.report,
+      (newReport) => {
+        localReport.value = { ...newReport }
+      },
+      { immediate: true }
+    )
+
     const formatTimestamp = (timestamp) => {
       if (!timestamp) return ''
       const date = new Date(timestamp)
@@ -63,11 +79,10 @@ export default {
         await store.dispatch('sendMessage', {
           reportId: localReport.value.id,
           message: newMessage.value.trim(),
+          sender: 'professional'
         })
-        // Opcional: Recargar mensajes desde la store si es necesario
-        // Aquí simplemente lo agregamos localmente:
         localReport.value.chat_messages.push({
-          sender: 'patient',
+          sender: 'professional',
           message: newMessage.value.trim(),
           timestamp: new Date().toISOString(),
         })
@@ -78,20 +93,23 @@ export default {
       }
     }
 
-    watch(
-      () => props.report,
-      (newReport) => {
-        localReport.value = { ...newReport }
-        console.log('Reporte:', newReport)
-      },
-      { immediate: true }
-    )
+    const closeChat = async () => {
+      try {
+        await store.dispatch('close_chat', localReport.value.id)
+        alert('Chat cerrado correctamente.')
+        emit('close')
+      } catch (error) {
+        alert('No se pudo cerrar el chat.')
+        console.error(error)
+      }
+    }
 
     return {
       localReport,
       newMessage,
       sendMessage,
       formatTimestamp,
+      closeChat
     }
   },
 }
@@ -102,42 +120,29 @@ export default {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .modal-content {
-  background: white;
-  padding: 2rem;
+  background: #fff;
   border-radius: 8px;
+  padding: 2rem;
+  max-width: 600px;
   width: 90%;
-  max-width: 800px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.modal-header h5 {
-  font-size: 1.25rem;
-  color: #2c3e50;
-}
-
-.btn-review {
-  background-color: #d1e7dd;
-  color: #0f5132;
-}
-
-.btn-review:hover {
-  background-color: #0f5132;
+  margin-bottom: 1rem;
 }
 
 .btn-close {
@@ -145,28 +150,6 @@ export default {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-}
-
-.modal-body .info-section {
-  margin-bottom: 1.5rem;
-}
-
-.modal-body label {
-  font-weight: bold;
-}
-
-.modal-body textarea {
-  width: calc(100% - 2rem);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.btn-close-bottom {
-  background: none;
-  border: none;
 }
 
 .chat-history {
@@ -189,8 +172,8 @@ export default {
   align-self: flex-end;
 }
 
-.from-reviewer {
-  background: #f8d7da;
+.from-professional {
+  background: #cfe2ff;
   align-self: flex-start;
 }
 
@@ -210,6 +193,7 @@ export default {
   display: flex;
   gap: 0.5rem;
   align-items: flex-end;
+  margin-bottom: 1rem;
 }
 
 .chat-input textarea {
@@ -235,5 +219,18 @@ export default {
   color: #888;
   text-align: center;
   padding: 1rem 0;
+}
+
+.btn-close-chat {
+  background: #b91c1c;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+.btn-close-chat:hover {
+  background: #7f1d1d;
 }
 </style>

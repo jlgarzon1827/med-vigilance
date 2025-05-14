@@ -145,7 +145,7 @@ th {
   color: #842029;
 }
 
-.severity-badge.mortal {
+.severity-badge.muy_grave {
   background-color: #842029;
   color: #fff;
 }

@@ -33,6 +33,12 @@ export default createStore({
         delete axios.defaults.headers.common['Authorization']
       }
     },
+    updateUserDataProtection(state, payload) {
+      if (state.userProfile) {
+        state.userProfile.data_protection_accepted = payload.accepted;
+        state.userProfile.data_protection_accepted_at = payload.acceptedAt;
+      }
+    },
     setMedications(state, medications) {
       state.medications = medications
     },
@@ -97,6 +103,23 @@ export default createStore({
         state.adverseEffects.splice(index, 1, updatedEffect)
       }
     },
+    addMessage(state, { effectId, message }) {
+      const effect = state.adverseEffects.find(e => e.id === effectId)
+      if (effect) {
+        effect.chat_messages = [...effect.chat_messages, message]
+      }
+    },
+    closeChat(state, effectId) {
+      const effect = state.adverseEffects.find(e => e.id === effectId)
+      if (effect) {
+        effect.status = 'IN_REVISION'
+        effect.chat_messages.push({
+          sender: 'system',
+          message: 'Chat cerrado por el profesional',
+          timestamp: new Date().toISOString()
+        })
+      }
+    },
     setProfessionals(state, professionals) {
       state.professionals = professionals
     },
@@ -156,6 +179,31 @@ export default createStore({
       } catch (error) {
         console.error('Registration failed', error)
         return false
+      }
+    },
+    async acceptDataProtectionPolicy({ commit, state }) {
+      try {
+        const response = await axios.post(
+          '/users/accept_data_protection/', 
+          {},
+          {
+            headers: {
+              'Authorization': `Bearer ${state.token || localStorage.getItem('token')}`
+            }
+          }
+        );
+        
+        // Actualiza el perfil del usuario en el store
+        if (response.data.data_protection_accepted) {
+          commit('updateUserDataProtection', {
+            accepted: response.data.data_protection_accepted,
+            acceptedAt: response.data.data_protection_accepted_at
+          });
+        }
+        return true;
+      } catch (error) {
+        console.error('Error aceptando política:', error);
+        throw error;
       }
     },
     async logout({ commit }) {
@@ -394,7 +442,64 @@ export default createStore({
       } finally {
         commit('setLoading', false)
       }
+    },
+    async sendMessage({ commit, state }, { effectId, message }) {
+      try {
+        const user = state.userProfile.profile;
+        const effect = state.adverseEffects.find(effect => effect.id === effectId);
+        
+        // Verificar permisos con datos reales
+        if (!effect) {
+          throw new Error('Reporte no encontrado');
+        }
+    
+        const userId = state.userProfile.id; // ID numérico (4 en el ejemplo)
+        
+        if (user.user_type === 'PATIENT') {
+          if (effect.patient !== userId) { // Comparación directa de números
+            throw new Error('Solo el paciente asociado puede enviar mensajes');
+          }
+        } 
+        else if (user.user_type === 'PROFESSIONAL') {
+          if (effect.reviewer !== userId) { // Comparación directa de números
+            throw new Error('Solo el profesional asignado puede enviar mensajes');
+          }
+        } 
+        else {
+          throw new Error('Tipo de usuario no válido');
+        }
+    
+        const sender = user.user_type.toLowerCase(); // 'patient' o 'professional'
+        
+        // Llamada API
+        await axios.post(`/adverse-effects/${effectId}/add_message/`, {
+          message,
+          sender
+        });
+    
+        commit('addMessage', {
+          effectId,
+          message: {
+            sender,
+            message,
+            timestamp: new Date().toISOString()
+          }
+        });
+    
+      } catch (error) {
+        console.error('Error enviando mensaje:', error);
+        throw error;
+      }
     },    
+    async closeChat({ commit }, effectId) {
+      try {
+        await axios.post(`/adverse-effects/${effectId}/close_chat/`)
+        commit('closeChat', effectId)
+      } catch (error) {
+        console.error('Error cerrando chat:', error)
+        throw error
+      }
+    },
     async fetchSupervisorView({ commit }, filters) {
       try {
         const response = await axios.get('/dashboard/supervisor_view/', {
@@ -670,6 +775,9 @@ export default createStore({
       return state.userProfile && 
              state.userProfile.profile && 
              state.userProfile.profile.user_type === 'PROFESSIONAL'
+    },
+    isPatient: (state) => {
+      return state.userProfile?.user_type === 'PATIENT'
     }
   }
 })

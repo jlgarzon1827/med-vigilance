@@ -76,7 +76,7 @@ export default {
     
     const formatDate = (dateString) => {
       const date = new Date(dateString)
-      return date.toLocaleDateString()
+      return date.toLocaleDateString('es-ES')
     }
     
     const goToReports = () => {
@@ -183,7 +183,7 @@ th {
   color: #842029;
 }
 
-.severity-badge.mortal {
+.severity-badge.muy_grave {
   background-color: #842029;
   color: #fff;
 }

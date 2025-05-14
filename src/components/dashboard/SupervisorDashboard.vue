@@ -296,39 +296,39 @@ select:focus {
   font-size: 0.875rem;
 }
 
-.status-badge.creado {
-  background-color: #d1e7dd; /* Verde claro */
-  color: #0f5132; /* Verde oscuro */
+.status-badge.created {
+  background-color: #e0e7ff;
+  color: #1e40af;
 }
 
-.status-badge.asignado {
-  background-color: #fff3cd; /* Amarillo claro */
-  color: #664d03; /* Amarillo oscuro */
+.status-badge.assigned {
+  background-color: #dbeafe;
+  color: #2563eb;
 }
 
-.status-badge.en_revision {
-  background-color: #f8d7da; /* Rojo claro */
-  color: #842029; /* Rojo oscuro */
+.status-badge.in_revision {
+  background-color: #fef08a;
+  color: #b45309;
 }
 
-.status-badge.pendiente_info {
-  background-color: #fff3cd; /* Amarillo claro */
-  color: #664d03; /* Amarillo oscuro */
+.status-badge.pending_information {
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
-.status-badge.rechazado {
-  background-color: #f8d7da; /* Rojo claro */
-  color: #842029; /* Rojo oscuro */
+.status-badge.rejected {
+  background-color: #fee2e2;
+  color: #b91c1c;
 }
 
-.status-badge.reclamado {
-  background-color: #d1e7dd; /* Verde claro */
-  color: #0f5132; /* Verde oscuro */
+.status-badge.reclaimed {
+  background-color: #f3e8ff;
+  color: #7c3aed;
 }
 
-.status-badge.aprobado {
-  background-color: #d1e7dd; /* Verde claro */
-  color: #0f5132; /* Verde oscuro */
+.status-badge.approved {
+  background-color: #dcfce7;
+  color: #15803d;
 }
 
 </style>

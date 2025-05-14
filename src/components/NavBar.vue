@@ -1,7 +1,7 @@
 <template>
   <div>
-    <!-- NavBar solo se muestra si está logueado -->
-    <nav v-if="isLoggedIn" class="NavBar">
+    <!-- NavBar solo se muestra si está logueado y NO está en data-protection -->
+    <nav v-if="showNavBar" class="NavBar">
       <router-link to="/" class="NavBar-link">Home</router-link>
       <span class="separator"> | </span>
       <router-link to="/dashboard" class="NavBar-link">Dashboard</router-link>
@@ -45,8 +45,8 @@
       <a href="#" @click.prevent="handleLogout" class="NavBar-link">Logout</a>
     </nav>
 
-    <!-- Navegación simple cuando no está logueado -->
-    <nav v-else class="NavBar">
+    <!-- NavBar simple si no está logueado y NO está en data-protection -->
+    <nav v-else-if="showNonLoggedNav" class="NavBar">
       <router-link to="/" class="NavBar-link">Home</router-link>
       <span class="separator"> | </span>
       <router-link to="/login" class="NavBar-link">Login</router-link>
@@ -58,14 +58,16 @@
 
 <script>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 
 export default {
   name: 'NavBar',
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const store = useStore()
+    
     const isLoggedIn = computed(() => store.getters.isLoggedIn)
     const isProfessional = computed(() => store.getters.isProfessional)
     const isSupervisor = computed(() => store.getters.isSupervisor)
@@ -73,6 +75,19 @@ export default {
     const isPatient = computed(() => store.getters.isPatient)
     const pendingCount = computed(() => {
       return store.state.pendingReviews?.pending || 0
+    })
+
+    // Nombre de la ruta actual
+    const currentRouteName = computed(() => route.name)
+
+    // NavBar logueado solo si no está en la page de data protection
+    const showNavBar = computed(() => {
+      return isLoggedIn.value && currentRouteName.value !== 'DataProtection'
+    })
+
+    // NavBar no logueado solo si no está en la page de data protection
+    const showNonLoggedNav = computed(() => {
+      return !isLoggedIn.value && currentRouteName.value !== 'DataProtection'
     })
 
     const handleLogout = async () => {
@@ -87,7 +102,9 @@ export default {
       isAdmin,
       isPatient,
       pendingCount,
-      handleLogout
+      handleLogout,
+      showNavBar,
+      showNonLoggedNav
     }
   }
 }

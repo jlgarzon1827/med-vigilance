@@ -9,7 +9,7 @@
         <div v-for="effect in adverseEffects" :key="effect.id" class="report-card">
           <div class="report-header">
             <h3>{{ getMedicationName(effect.medication) }}</h3>
-            <span :class="'severity-badge ' + effect.severity.toLowerCase()">
+            <span :class="'severity-badge ' + effect.severity.toLowerCase().replace(' ', '_')">
               {{ effect.severity }}
             </span>
           </div>
@@ -140,7 +140,7 @@ export default {
     
     const formatDate = (dateString) => {
       const date = new Date(dateString)
-      return date.toLocaleDateString()
+      return date.toLocaleDateString('es-ES')
     }
     
     const getMedicationName = (medicationId) => {
@@ -263,44 +263,44 @@ h2 {
   color: #842029;
 }
 
-.severity-badge.mortal {
+.severity-badge.muy_grave {
   background-color: #842029;
   color: #fff;
 }
 
-.status-badge.creado {
-  background-color: #d1e7dd;
-  color: #0f5132;
+.status-badge.created {
+  background-color: #e0e7ff;
+  color: #1e40af;
 }
 
-.status-badge.asignado {
-  background-color: #fff3cd;
-  color: #664d03;
+.status-badge.assigned {
+  background-color: #dbeafe;
+  color: #2563eb;
 }
 
-.status-badge.en_revision {
-  background-color: #f8d7da;
-  color: #842029;
+.status-badge.in_revision {
+  background-color: #fef08a;
+  color: #b45309;
 }
 
-.status-badge.pendiente_info {
-  background-color: #fff3cd;
-  color: #664d03;
+.status-badge.pending_information {
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
-.status-badge.rechazado {
-  background-color: #f8d7da;
-  color: #842029;
+.status-badge.rejected {
+  background-color: #fee2e2;
+  color: #b91c1c;
 }
 
-.status-badge.reclamado {
-  background-color: #d1e7dd;
-  color: #0f5132;
+.status-badge.reclaimed {
+  background-color: #f3e8ff;
+  color: #7c3aed;
 }
 
-.status-badge.aprobado {
-  background-color: #d1e7dd;
-  color: #0f5132;
+.status-badge.approved {
+  background-color: #dcfce7;
+  color: #15803d;
 }
 
 .report-dates, .report-description, .report-details, .report-status, .report-date {

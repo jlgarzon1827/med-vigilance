@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '../views/HomePage.vue'
 import LoginPage from '../views/LoginPage.vue'
 import RegisterPage from '../views/RegisterPage.vue'
+import DataProtectionPage from '../views/DataProtectionPage.vue'
 import DashboardPage from '../views/DashboardPage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import AdminPage from '../views/AdminPage.vue'
@@ -17,6 +18,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: LoginPage
+  },
+  {
+    path: '/data-protection',
+    name: 'DataProtection',
+    component: DataProtectionPage
   },
   {
     path: '/register',

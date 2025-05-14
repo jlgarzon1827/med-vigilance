@@ -53,11 +53,11 @@
             </div>
             <div class="info-item">
               <span class="label">Fecha Inicio:</span>
-              <span class="value">{{ report.start_date }}</span>
+              <span class="value">{{ formatDate(report.start_date) }}</span>
             </div>
             <div class="info-item">
               <span class="label">Fecha Fin:</span>
-              <span class="value">{{ report.end_date || 'No especificada' }}</span>
+              <span class="value">{{ formatDate(report.end_date) || 'No especificada' }}</span>
             </div>
           </div>
         </div>
@@ -94,17 +94,32 @@
         >
           Marcar como Revisado
         </button>
+        <button 
+          v-if="report.status === 'PENDING_INFORMATION'" 
+          @click="openChatModal"
+          class="btn-review"
+        >
+          Abrir Chat
+        </button>
         <button @click="$emit('close')" class="btn-close-bottom">Cerrar</button>
       </div>
     </div>
+    <ProfessionalChatModal
+      v-if="showChatModal"
+      :report="report"
+      @close="showChatModal = false"
+    />
   </div>
 </template>
 
 <script>
+import { ref } from 'vue'
 import { useStore } from 'vuex'
+import ProfessionalChatModal from './ProfessionalChatModal.vue'
 
 export default {
   name: 'ReportDetail',
+  components: { ProfessionalChatModal },
   props: {
     report: {
       type: Object,
@@ -114,10 +129,11 @@ export default {
   emits: ['close'],
   setup(props, { emit }) {
     const store = useStore()
-    
+    const showChatModal = ref(false)
+
     const formatDate = (dateString) => {
       const date = new Date(dateString)
-      return date.toLocaleDateString()
+      return date.toLocaleDateString('es-ES')
     }
     
     const markAsReviewed = async () => {
@@ -126,10 +142,16 @@ export default {
         emit('close')
       }
     }
+
+    const openChatModal = () => {
+      showChatModal.value = true
+    }
     
     return {
       formatDate,
-      markAsReviewed
+      markAsReviewed,
+      showChatModal,
+      openChatModal
     }
   }
 }
@@ -239,44 +261,44 @@ export default {
   color: #842029;
 }
 
-.severity-badge.mortal {
+.severity-badge.muy_grave {
   background-color: #842029;
   color: #fff;
 }
 
-.status-badge.creado {
-  background-color: #d1e7dd;
-  color: #0f5132;
+.status-badge.created {
+  background-color: #e0e7ff;
+  color: #1e40af;
 }
 
-.status-badge.asignado {
-  background-color: #fff3cd;
-  color: #664d03;
+.status-badge.assigned {
+  background-color: #dbeafe;
+  color: #2563eb;
 }
 
-.status-badge.en_revision {
-  background-color: #f8d7da;
-  color: #842029;
+.status-badge.in_revision {
+  background-color: #fef08a;
+  color: #b45309;
 }
 
-.status-badge.pendiente_info {
-  background-color: #fff3cd;
-  color: #664d03;
+.status-badge.pending_information {
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
-.status-badge.rechazado {
-  background-color: #f8d7da;
-  color: #842029;
+.status-badge.rejected {
+  background-color: #fee2e2;
+  color: #b91c1c;
 }
 
-.status-badge.reclamado {
-  background-color: #d1e7dd;
-  color: #0f5132;
+.status-badge.reclaimed {
+  background-color: #f3e8ff;
+  color: #7c3aed;
 }
 
-.status-badge.aprobado {
-  background-color: #d1e7dd;
-  color: #0f5132;
+.status-badge.approved {
+  background-color: #dcfce7;
+  color: #15803d;
 }
 
 .modal-actions {

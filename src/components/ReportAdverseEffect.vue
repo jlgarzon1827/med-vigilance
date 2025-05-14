@@ -66,7 +66,7 @@
             <option value="LEVE">Leve</option>
             <option value="MODERADA">Moderada</option>
             <option value="GRAVE">Grave</option>
-            <option value="MORTAL">Mortal</option>
+            <option value="MUY_GRAVE">Muy grave</option>
           </select>
           <span v-if="errors.severity" class="error-message">{{ errors.severity }}</span>
         </div>

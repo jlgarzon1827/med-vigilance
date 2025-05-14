@@ -14,7 +14,7 @@
                 <option value="LEVE">Leve</option>
                 <option value="MODERADA">Moderada</option>
                 <option value="GRAVE">Grave</option>
-                <option value="MORTAL">Mortal</option>
+                <option value="MUY_GRAVE">Muy grave</option>
               </select>
             </div>
             

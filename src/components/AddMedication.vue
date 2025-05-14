@@ -37,12 +37,16 @@
         <div class="form-group">
           <div class="input-row">
             <label for="frequency">Frecuencia:</label>
-            <input 
-              type="text" 
-              id="frequency" 
-              v-model="frequency" 
-              placeholder="ej: 8 horas, OD, BID"
+            <select 
+              id="frequency"
+              v-model="frequency"
             >
+              <option value="">Seleccione frecuencia</option>
+              <option value="OD">OD (Una vez al día)</option>
+              <option value="BID">BID (Dos veces al día)</option>
+              <option value="TID">TID (Tres veces al día)</option>
+              <option value="PRN">PRN (Según sea necesario)</option>
+            </select>
           </div>
           <span v-if="errors.frecuencia" class="error-message">{{ errors.frecuencia }}</span>
           <p class="legend">OD: Una vez al día, BID: Dos veces al día, TID: Tres veces al día, PRN: Según sea necesario</p>

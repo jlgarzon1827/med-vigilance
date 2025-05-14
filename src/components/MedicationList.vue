@@ -4,9 +4,9 @@
     <table v-else-if="isDataReady && medications.length">
       <thead>
         <tr>
-          <th>Nombre del Medicamento Maestro</th>
-          <th>Dosis Personalizada</th>
-          <th>Frecuencia Personalizada</th>
+          <th>Nombre del Medicamento</th>
+          <th>Dosis</th>
+          <th>Frecuencia</th>
           <th>Acciones</th>
         </tr>
       </thead>

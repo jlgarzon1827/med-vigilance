@@ -190,7 +190,7 @@ export default {
     
     const patientTabs = computed(() => {
       return [
-        { id: 'medications', name: 'Mis Medicamentos' },
+        { id: 'medications', name: 'Medicación' },
         { id: 'report-adverse', name: 'Reportar Efecto Adverso' },
         { id: 'my-reports', name: 'Mis Reportes' }
       ]

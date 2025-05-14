@@ -14,7 +14,7 @@
             <tr>
               <th>Nombre de Usuario</th>
               <th>Rol Actual</th>
-              <th>Acciones</th>
+              <th>Cambiar Rol</th>
             </tr>
           </thead>
           <tbody>

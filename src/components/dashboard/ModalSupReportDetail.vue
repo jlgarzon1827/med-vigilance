@@ -58,11 +58,11 @@
                   </div>
                   <div class="info-item">
                     <span class="label">Fecha Inicio:</span>
-                    <span class="value">{{ report.start_date }}</span>
+                    <span class="value">{{ formatDate(report.start_date) }}</span>
                   </div>
                   <div class="info-item">
                     <span class="label">Fecha Fin:</span>
-                    <span class="value">{{ report.end_date || 'No especificada' }}</span>
+                    <span class="value">{{ formatDate(report.end_date) || 'No especificada' }}</span>
                   </div>
                 </div>
               </div>
@@ -123,7 +123,7 @@ export default {
     const formatDate = (dateString) => {
       if (!dateString) return 'No disponible'
       const date = new Date(dateString)
-      return date.toLocaleDateString()
+      return date.toLocaleDateString('es-ES')
     }
 
     // Mapea el estado a un texto legible
